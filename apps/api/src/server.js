@@ -1,68 +1,58 @@
-'use strict';
+import { existsSync, readFileSync } from 'node:fs';
+import { loadEnv, EnvValidationError } from './config/env.js';
+import { createLogger } from './config/logger.js';
+import { connectMongo, disconnectMongo, checkDatabase } from './db/connection.js';
+import { createApp } from './app.js';
 
-// Load env vars first — must happen before any other import reads process.env
-require('dotenv').config();
+// Local dev: load apps/api/.env if present (built into Node, no extra package).
+if (existsSync('.env')) process.loadEnvFile('.env');
 
-const { config } = require('./config/env');
-const { logger } = require('./infrastructure/logger');
-const { connectDB, disconnectDB } = require('./infrastructure/db');
-const { app } = require('./app');
-
-let server;
-
-async function start() {
-  // Connect to MongoDB
-  await connectDB();
-
-  // Start HTTP server
-  server = app.listen(config.PORT, () => {
-    logger.info({ port: config.PORT, env: config.NODE_ENV }, 'HTTP server listening');
-  });
-
-  server.on('error', (err) => {
-    logger.fatal({ err }, 'HTTP server error');
+let config;
+try {
+  config = loadEnv();
+} catch (err) {
+  if (err instanceof EnvValidationError) {
+    console.error(err.message);
     process.exit(1);
-  });
-}
-
-/**
- * Graceful shutdown handler.
- * Stops accepting new connections, then closes DB.
- */
-async function shutdown(signal) {
-  logger.info({ signal }, 'Shutdown signal received — shutting down gracefully');
-
-  if (server) {
-    await new Promise((resolve, reject) => {
-      server.close((err) => {
-        if (err) {
-          return reject(err);
-        }
-        return resolve();
-      });
-    });
-    logger.info('HTTP server closed');
   }
-
-  await disconnectDB();
-  logger.info('Shutdown complete');
-  process.exit(0);
+  throw err;
 }
 
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
+const logger = createLogger({ level: config.logLevel });
+const version = JSON.parse(
+  readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+).version;
+
+async function main() {
+  await connectMongo({ uri: config.mongo.uri, dbName: config.mongo.dbName, logger });
+  const app = createApp({ config, logger, checkDatabase, version });
+  const server = app.listen(config.port, () => {
+    logger.info({ port: config.port, env: config.nodeEnv }, 'api listening');
+  });
+
+  let shuttingDown = false;
+  const shutdown = (signal) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    logger.info({ signal }, 'shutting down');
+    const force = setTimeout(() => process.exit(1), 10_000);
+    force.unref();
+    server.close(async () => {
+      await disconnectMongo().catch(() => {});
+      process.exit(0);
+    });
+  };
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+}
 
 process.on('unhandledRejection', (reason) => {
-  logger.fatal({ reason }, 'Unhandled promise rejection — shutting down');
+  logger.fatal({ err: reason }, 'unhandled rejection');
   process.exit(1);
 });
 
-process.on('uncaughtException', (err) => {
-  logger.fatal({ err }, 'Uncaught exception — shutting down');
-  process.exit(1);
-});
-
-start().catch((err) => {
-  logger.fatal({ err }, 'Failed to start server');
+main().catch((err) => {
+  // The message may mention the cluster host; it never includes the password.
+  logger.fatal({ err: { message: err.message, name: err.name } }, 'startup failed');
   process.exit(1);
 });

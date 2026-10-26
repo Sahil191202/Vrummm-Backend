@@ -1,12 +1,13 @@
 {
   "name": "@vrumm/contracts",
-  "version": "1.0.0",
-  "description": "Shared contracts: error codes, HTTP status, socket events, API shapes",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
   "main": "src/index.js",
-  "scripts": {
-    "lint": "eslint \"src/**/*.js\""
+  "exports": {
+    ".": "./src/index.js"
   },
-  "keywords": [],
-  "license": "UNLICENSED",
-  "private": true
+  "scripts": {
+    "test": "vitest run"
+  }
 }

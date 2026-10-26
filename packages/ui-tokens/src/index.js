@@ -1,4 +1,2 @@
-'use strict';
-
-// Phase 1 placeholder — design tokens will be defined here in a future phase.
-module.exports = { placeholder: true };
+// Placeholder. Design tokens are built elsewhere and will replace this file.
+export const tokens = Object.freeze({});

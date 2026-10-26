@@ -1,90 +1,40 @@
-'use strict';
+import express from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
+import { API_BASE_PATH } from '@vrumm/contracts';
+import { requestId } from './middleware/requestId.js';
+import { requestLogger } from './middleware/requestLogger.js';
+import { notFound } from './middleware/notFound.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import { createHealthService } from './modules/health/health.service.js';
+import { createAuthService } from './modules/auth/auth.service.js';
+import { createApiRouter } from './routes.js';
 
-const express = require('express');
-const helmet = require('helmet');
-const cors = require('cors');
-const pinoHttp = require('pino-http');
-const rateLimit = require('express-rate-limit');
+export function createApp({ config, logger, checkDatabase, version = 'unknown' }) {
+  const app = express();
+  app.disable('x-powered-by');
 
-const { config } = require('./config/env');
-const { logger } = require('./infrastructure/logger');
-const { requestId } = require('./middleware/requestId');
-const { errorHandler } = require('./middleware/errorHandler');
-const { notFound } = require('./middleware/notFound');
-const { BODY_LIMIT } = require('./config/constants');
+  app.use(requestId);
+  app.use(requestLogger(logger));
+  app.use(helmet());
+  app.use(
+    cors({
+      origin: [...config.corsOrigins],
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id', 'Idempotency-Key'],
+      exposedHeaders: ['X-Request-Id'],
+      maxAge: 600,
+    }),
+  );
+  // NOTE for Phase 7: the Razorpay webhook route must be mounted BEFORE this line with express.raw()
+  app.use(express.json({ limit: '100kb' }));
 
-// Routes
-const { healthRouter } = require('./modules/health/health.routes');
+  const healthService = createHealthService({ checkDatabase, version });
+  const authService = createAuthService({ authConfig: config.auth });
 
-const app = express();
+  app.use(API_BASE_PATH, createApiRouter({ healthService, authService }));
 
-// ── Security headers ──────────────────────────────────────────────────────────
-app.use(helmet());
-
-// ── CORS ──────────────────────────────────────────────────────────────────────
-const allowedOrigins = config.CORS_ORIGINS.split(',').map((o) => o.trim());
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. mobile apps, curl, Postman)
-      if (!origin) {
-        return callback(null, true);
-      }
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error(`CORS: origin "${origin}" not allowed`));
-    },
-    credentials: true,
-  })
-);
-
-// ── Request ID ────────────────────────────────────────────────────────────────
-app.use(requestId);
-
-// ── HTTP request logging ──────────────────────────────────────────────────────
-app.use(
-  pinoHttp({
-    logger,
-    genReqId: (req) => req.id,
-    customLogLevel: (_req, res, err) => {
-      if (err || res.statusCode >= 500) {
-        return 'error';
-      }
-      if (res.statusCode >= 400) {
-        return 'warn';
-      }
-      return 'info';
-    },
-  })
-);
-
-// ── Body parsing ──────────────────────────────────────────────────────────────
-app.use(express.json({ limit: BODY_LIMIT }));
-app.use(express.urlencoded({ extended: false, limit: BODY_LIMIT }));
-
-// ── Rate limiting ─────────────────────────────────────────────────────────────
-app.use(
-  rateLimit({
-    windowMs: config.RATE_LIMIT_WINDOW_MS,
-    max: config.RATE_LIMIT_MAX,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: {
-      success: false,
-      code: 'RATE_LIMITED',
-      message: 'Too many requests, please try again later',
-    },
-  })
-);
-
-// ── Routes ────────────────────────────────────────────────────────────────────
-app.use('/api/v1', healthRouter);
-
-// ── 404 handler ───────────────────────────────────────────────────────────────
-app.use(notFound);
-
-// ── Global error handler ──────────────────────────────────────────────────────
-app.use(errorHandler);
-
-module.exports = { app };
+  app.use(notFound);
+  app.use(errorHandler(logger));
+  return app;
+}

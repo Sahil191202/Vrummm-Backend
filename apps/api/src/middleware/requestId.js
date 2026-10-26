@@ -1,19 +1,12 @@
-'use strict';
+import { randomUUID } from 'node:crypto';
+import { REQUEST_ID_HEADER } from '@vrumm/contracts';
 
-const { v4: uuidv4 } = require('uuid');
+// Accept a client-supplied id only if it is short and safe. This stops log injection.
+const SAFE_ID = /^[A-Za-z0-9._-]{8,64}$/;
 
-/**
- * Middleware: attach a unique request ID to every incoming request.
- *
- * - If the client sends an X-Request-Id header, that value is used as-is.
- * - Otherwise a new UUID v4 is generated.
- * - The ID is set as req.id and echoed back in the X-Request-Id response header.
- */
-function requestId(req, res, next) {
-  const id = req.headers['x-request-id'] || uuidv4();
-  req.id = id;
-  res.setHeader('X-Request-Id', id);
+export function requestId(req, res, next) {
+  const incoming = req.get(REQUEST_ID_HEADER);
+  req.id = incoming && SAFE_ID.test(incoming) ? incoming : randomUUID();
+  res.setHeader('X-Request-Id', req.id);
   next();
 }
-
-module.exports = { requestId };

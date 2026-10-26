@@ -1,29 +1,18 @@
-'use strict';
+import { sendSuccess } from '../../shared/respond.js';
+import { errors } from '../../shared/AppError.js';
 
-const mongoose = require('mongoose');
-const { success } = require('../../utils/respond');
-
-/**
- * Health controller.
- * Kept separate from the router for testability.
- */
-
-/**
- * GET /api/v1/health
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-async function getHealth(req, res) {
-  const dbState = mongoose.connection.readyState;
-  const dbStatus = dbState === 1 ? 'connected' : 'disconnected';
-
-  return success(res, {
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    version: process.env.npm_package_version || '1.0.0',
-    env: process.env.NODE_ENV || 'development',
-    db: dbStatus,
-  });
+// Thin controller: no business rules here.
+export function createHealthController({ healthService }) {
+  return {
+    live(req, res) {
+      return sendSuccess(req, res, healthService.liveness());
+    },
+    async ready(req, res) {
+      const result = await healthService.readiness();
+      if (!result.ready) {
+        throw errors.unavailable('Service is not ready', { checks: result.checks });
+      }
+      return sendSuccess(req, res, { status: result.status, checks: result.checks });
+    },
+  };
 }
-
-module.exports = { getHealth };

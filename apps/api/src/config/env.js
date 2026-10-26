@@ -1,88 +1,127 @@
-'use strict';
+import { z } from 'zod';
 
-// dotenv is loaded by server.js before this module is required.
-// We call it here too as a safety net for cases where env.js is loaded
-// directly (e.g. scripts), but we do NOT override already-set vars.
-if (process.env.NODE_ENV !== 'test') {
-  require('dotenv').config();
+const flag = z
+  .enum(['true', 'false'])
+  .default('false')
+  .transform((v) => v === 'true');
+
+const FLAG_NAMES = ['LIVE_RIDES_ENABLED', 'REAL_PAYMENTS_ENABLED', 'REAL_PAYOUTS_ENABLED'];
+
+function isExactOrigin(value) {
+  try {
+    return new URL(value).origin === value;
+  } catch {
+    return false;
+  }
 }
 
-const { z } = require('zod');
-
-const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z
-    .string()
-    .default('3001')
-    .transform((v) => parseInt(v, 10))
-    .pipe(z.number().int().positive()),
-
-  // MongoDB
-  MONGODB_URI: z.string().url('MONGODB_URI must be a valid URL'),
-  MONGODB_DB_NAME: z.string().min(1),
-
-  // JWT
-  JWT_SECRET: z.string().min(16, 'JWT_SECRET must be at least 16 characters'),
-  JWT_REFRESH_SECRET: z.string().min(16, 'JWT_REFRESH_SECRET must be at least 16 characters'),
-
-  // MinIO / S3
-  MINIO_ENDPOINT: z.string().min(1),
-  MINIO_PORT: z
-    .string()
-    .default('9000')
-    .transform((v) => parseInt(v, 10))
-    .pipe(z.number().int().positive()),
-  MINIO_ACCESS_KEY: z.string().min(1),
-  MINIO_SECRET_KEY: z.string().min(1),
-  MINIO_BUCKET: z.string().min(1),
-  MINIO_USE_SSL: z
-    .string()
-    .default('false')
-    .transform((v) => v === 'true'),
-
-  // Providers
-  STORAGE_PROVIDER: z.enum(['minio', 'local']).default('minio'),
-  MAPS_PROVIDER: z.enum(['mock', 'googlemaps']).default('mock'),
-
-  // Razorpay (optional in dev/test)
-  RAZORPAY_KEY_ID: z.string().optional(),
-  RAZORPAY_KEY_SECRET: z.string().optional(),
-  RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
-
-  // CORS
-  CORS_ORIGINS: z.string().default('http://localhost:3000'),
-
-  // Rate limiting
-  RATE_LIMIT_WINDOW_MS: z
-    .string()
-    .default('60000')
-    .transform((v) => parseInt(v, 10))
-    .pipe(z.number().int().positive()),
-  RATE_LIMIT_MAX: z
-    .string()
-    .default('100')
-    .transform((v) => parseInt(v, 10))
-    .pipe(z.number().int().positive()),
-
-  // Logging
-  LOG_LEVEL: z
-    .enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent'])
-    .default('info'),
-});
-
-const parseResult = envSchema.safeParse(process.env);
-
-if (!parseResult.success) {
-  // Use plain console.error here — logger isn't initialised yet
-  // eslint-disable-next-line no-console
-  console.error('[config/env] Environment validation failed:');
-  parseResult.error.errors.forEach((err) => {
-    // eslint-disable-next-line no-console
-    console.error(`  ${err.path.join('.')}: ${err.message}`);
+const envSchema = z
+  .object({
+    NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+    PORT: z.coerce.number().int().min(1).max(65535).default(4000),
+    LOG_LEVEL: z
+      .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
+      .default('info'),
+    MONGODB_URI: z.string().refine((v) => /^mongodb(\+srv)?:\/\/.+/.test(v), {
+      message: 'must be a mongodb:// or mongodb+srv:// connection string',
+    }),
+    MONGODB_DB_NAME: z.string().min(1).default('vrumm'),
+    CORS_ORIGINS: z
+      .string()
+      .default('http://localhost:3000')
+      .transform((s) =>
+        s
+          .split(',')
+          .map((x) => x.trim())
+          .filter(Boolean),
+      ),
+    ACCESS_TOKEN_SECRET: z
+      .string()
+      .min(32, 'must be at least 32 characters — generate with: openssl rand -hex 32'),
+    REFRESH_TOKEN_SECRET: z
+      .string()
+      .min(32, 'must be at least 32 characters — generate with: openssl rand -hex 32'),
+    ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().min(60).max(3600).default(900),
+    REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(30),
+    LIVE_RIDES_ENABLED: flag,
+    REAL_PAYMENTS_ENABLED: flag,
+    REAL_PAYOUTS_ENABLED: flag,
+  })
+  .superRefine((env, ctx) => {
+    for (const origin of env.CORS_ORIGINS) {
+      const valid = isExactOrigin(origin);
+      if (!valid) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['CORS_ORIGINS'],
+          message:
+            'each entry must be an exact origin like https://example.com (no wildcard, path or trailing slash)',
+        });
+      } else if (env.NODE_ENV === 'production' && !origin.startsWith('https://')) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['CORS_ORIGINS'],
+          message: 'production origins must use https',
+        });
+      }
+    }
+    if (env.CORS_ORIGINS.length === 0) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['CORS_ORIGINS'],
+        message: 'at least one origin is required',
+      });
+    }
+    if (env.NODE_ENV !== 'test' && env.ACCESS_TOKEN_SECRET === env.REFRESH_TOKEN_SECRET) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['REFRESH_TOKEN_SECRET'],
+        message: 'ACCESS_TOKEN_SECRET and REFRESH_TOKEN_SECRET must be different values',
+      });
+    }
+    for (const name of FLAG_NAMES) {
+      if (env[name]) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [name],
+          message:
+            'must stay false: this is a learning project and is not authorised for live operation',
+        });
+      }
+    }
   });
-  process.exit(1);
+
+export class EnvValidationError extends Error {
+  constructor(problems) {
+    super(`Invalid environment configuration:\n${problems.map((p) => `  - ${p}`).join('\n')}`);
+    this.name = 'EnvValidationError';
+    this.problems = problems;
+  }
 }
 
-const config = parseResult.data;
-
-module.exports = { config };
+export function loadEnv(source = process.env) {
+  const result = envSchema.safeParse(source);
+  if (!result.success) {
+    const problems = result.error.issues.map((i) => `${i.path.join('.') || 'env'}: ${i.message}`);
+    throw new EnvValidationError(problems);
+  }
+  const e = result.data;
+  return Object.freeze({
+    nodeEnv: e.NODE_ENV,
+    port: e.PORT,
+    logLevel: e.LOG_LEVEL,
+    mongo: Object.freeze({ uri: e.MONGODB_URI, dbName: e.MONGODB_DB_NAME }),
+    corsOrigins: Object.freeze(e.CORS_ORIGINS),
+    auth: Object.freeze({
+      accessTokenSecret: e.ACCESS_TOKEN_SECRET,
+      refreshTokenSecret: e.REFRESH_TOKEN_SECRET,
+      accessTokenTtlSeconds: e.ACCESS_TOKEN_TTL_SECONDS,
+      refreshTokenTtlDays: e.REFRESH_TOKEN_TTL_DAYS,
+    }),
+    features: Object.freeze({
+      liveRidesEnabled: e.LIVE_RIDES_ENABLED,
+      realPaymentsEnabled: e.REAL_PAYMENTS_ENABLED,
+      realPayoutsEnabled: e.REAL_PAYOUTS_ENABLED,
+    }),
+  });
+}

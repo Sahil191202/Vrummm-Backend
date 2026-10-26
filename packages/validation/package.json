@@ -1,28 +1,17 @@
 {
   "name": "@vrumm/validation",
-  "version": "1.0.0",
-  "description": "Shared Zod validation schemas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
   "main": "src/index.js",
-  "scripts": {
-    "lint": "eslint \"src/**/*.js\"",
-    "test": "jest --runInBand"
+  "exports": {
+    ".": "./src/index.js"
   },
-  "peerDependencies": {
-    "zod": "^3.0.0"
+  "scripts": {
+    "test": "vitest run"
   },
   "dependencies": {
-    "zod": "^3.22.4"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "testMatch": [
-      "**/__tests__/**/*.test.js"
-    ]
-  },
-  "keywords": [],
-  "license": "UNLICENSED",
-  "private": true
+    "@vrumm/contracts": "*",
+    "zod": "^4.6.7"
+  }
 }
