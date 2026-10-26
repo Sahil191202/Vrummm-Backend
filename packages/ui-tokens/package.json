@@ -1,0 +1,12 @@
+{
+  "name": "@vrumm/ui-tokens",
+  "version": "1.0.0",
+  "description": "Design tokens placeholder",
+  "main": "src/index.js",
+  "scripts": {
+    "lint": "eslint \"src/**/*.js\""
+  },
+  "keywords": [],
+  "license": "UNLICENSED",
+  "private": true
+}
