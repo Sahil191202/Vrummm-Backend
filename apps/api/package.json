@@ -19,7 +19,9 @@
     "zod": "^4.6.7",
     "bcrypt": "^6.0.0",
     "express-rate-limit": "^8.7.1",
-    "jsonwebtoken": "^9.0.3"
+    "jsonwebtoken": "^9.0.3",
+    "cloudinary": "^2.6.1",
+    "multer": "^2.0.1"
   },
   "devDependencies": {
     "supertest": "^7.3.1"

@@ -2,9 +2,9 @@ import { existsSync, readFileSync } from 'node:fs';
 import { loadEnv, EnvValidationError } from './config/env.js';
 import { createLogger } from './config/logger.js';
 import { connectMongo, disconnectMongo, checkDatabase } from './db/connection.js';
+import { CloudinaryStorageProvider } from './shared/storage/CloudinaryStorageProvider.js';
 import { createApp } from './app.js';
 
-// Local dev: load apps/api/.env if present (built into Node, no extra package).
 if (existsSync('.env')) process.loadEnvFile('.env');
 
 let config;
@@ -12,20 +12,36 @@ try {
   config = loadEnv();
 } catch (err) {
   if (err instanceof EnvValidationError) {
-    console.error(err.message);
+    console.error(err.message); // eslint-disable-line no-console
     process.exit(1);
   }
   throw err;
 }
 
 const logger = createLogger({ level: config.logLevel });
+import { v2 as cloudinary } from 'cloudinary';
+
+// TEMPORARY — remove after debugging
+cloudinary.config({
+  cloud_name: config.cloudinary.cloudName,
+  api_key: config.cloudinary.apiKey,
+  api_secret: config.cloudinary.apiSecret,
+});
+cloudinary.api.ping().then((r) => {
+  logger.info({ result: r }, 'cloudinary ping');
+}).catch((e) => {
+  logger.error({ detail: e.error ?? e.message }, 'cloudinary ping FAILED');
+});
 const version = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
 ).version;
 
 async function main() {
   await connectMongo({ uri: config.mongo.uri, dbName: config.mongo.dbName, logger });
-  const app = createApp({ config, logger, checkDatabase, version });
+
+  const storageProvider = new CloudinaryStorageProvider(config.cloudinary);
+
+  const app = createApp({ config, logger, checkDatabase, storageProvider, version });
   const server = app.listen(config.port, () => {
     logger.info({ port: config.port, env: config.nodeEnv }, 'api listening');
   });
@@ -52,7 +68,6 @@ process.on('unhandledRejection', (reason) => {
 });
 
 main().catch((err) => {
-  // The message may mention the cluster host; it never includes the password.
   logger.fatal({ err: { message: err.message, name: err.name } }, 'startup failed');
   process.exit(1);
 });

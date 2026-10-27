@@ -11,6 +11,22 @@ export const testConfig = loadEnv({
   REFRESH_TOKEN_SECRET: 'test-refresh-secret-bbbbbbbbbbbbbbbbb',
 });
 
+// In-memory storage provider for tests. Never calls Cloudinary.
+export const mockStorageProvider = {
+  async uploadDocument({ originalName }) {
+    return {
+      publicId: `mock/documents/${Date.now()}-${originalName}`,
+      resourceType: 'image',
+      bytes: 1024,
+      format: 'jpg',
+    };
+  },
+  async getSignedUrl({ publicId }) {
+    return `https://mock-storage.example.com/${publicId}?token=test`;
+  },
+  async deleteDocument() {},
+};
+
 export function silentLogger() {
   return createLogger({ level: 'silent' });
 }
@@ -31,6 +47,7 @@ export function buildTestApp({ dbUp = true, logger = silentLogger() } = {}) {
     config: testConfig,
     logger,
     checkDatabase: async () => dbUp,
+    storageProvider: mockStorageProvider,
     version: '0.0.0-test',
   });
 }

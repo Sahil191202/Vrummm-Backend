@@ -10,7 +10,7 @@ import { createHealthService } from './modules/health/health.service.js';
 import { createAuthService } from './modules/auth/auth.service.js';
 import { createApiRouter } from './routes.js';
 
-export function createApp({ config, logger, checkDatabase, version = 'unknown' }) {
+export function createApp({ config, logger, checkDatabase, storageProvider, version = 'unknown' }) {
   const app = express();
   app.disable('x-powered-by');
 
@@ -26,13 +26,13 @@ export function createApp({ config, logger, checkDatabase, version = 'unknown' }
       maxAge: 600,
     }),
   );
-  // NOTE for Phase 7: the Razorpay webhook route must be mounted BEFORE this line with express.raw()
+  // NOTE Phase 7: Razorpay webhook must be mounted BEFORE this line with express.raw()
   app.use(express.json({ limit: '100kb' }));
 
   const healthService = createHealthService({ checkDatabase, version });
   const authService = createAuthService({ authConfig: config.auth });
 
-  app.use(API_BASE_PATH, createApiRouter({ healthService, authService }));
+  app.use(API_BASE_PATH, createApiRouter({ healthService, authService, storageProvider }));
 
   app.use(notFound);
   app.use(errorHandler(logger));
