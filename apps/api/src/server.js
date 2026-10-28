@@ -19,19 +19,7 @@ try {
 }
 
 const logger = createLogger({ level: config.logLevel });
-import { v2 as cloudinary } from 'cloudinary';
 
-// TEMPORARY — remove after debugging
-cloudinary.config({
-  cloud_name: config.cloudinary.cloudName,
-  api_key: config.cloudinary.apiKey,
-  api_secret: config.cloudinary.apiSecret,
-});
-cloudinary.api.ping().then((r) => {
-  logger.info({ result: r }, 'cloudinary ping');
-}).catch((e) => {
-  logger.error({ detail: e.error ?? e.message }, 'cloudinary ping FAILED');
-});
 const version = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
 ).version;

@@ -5,6 +5,8 @@ import { createCustomerRouter } from './modules/customers/customer.routes.js';
 import { createCaptainRouter } from './modules/captains/captain.routes.js';
 import { createVehicleRouter } from './modules/vehicles/vehicle.routes.js';
 import { createDocumentRouter } from './modules/documents/document.routes.js';
+import { createFareRouter } from './modules/fares/fare.routes.js';
+import { createBookingRouter } from './modules/bookings/booking.routes.js';
 
 export function createApiRouter({ healthService, authService, storageProvider }) {
   const router = Router();
@@ -14,5 +16,7 @@ export function createApiRouter({ healthService, authService, storageProvider })
   router.use('/captains', createCaptainRouter({ authService }));
   router.use('/vehicles', createVehicleRouter({ authService }));
   router.use('/documents', createDocumentRouter({ authService, storageProvider }));
+  router.use('/fares', createFareRouter({ authService }));
+  router.use('/bookings', createBookingRouter({ authService }));
   return router;
 }
