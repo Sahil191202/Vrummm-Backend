@@ -1,24 +1,23 @@
 import mongoose from 'mongoose';
 import { Booking } from './schemas/booking.schema.js';
 import { Customer } from '../customers/schemas/customer.schema.js';
+import { ScheduledDispatchJob } from '../dispatch/schemas/scheduledDispatchJob.schema.js';
 import { errors } from '../../shared/AppError.js';
 
-// Dispatch window for scheduled rides: open 15 minutes before scheduled time.
 const SCHEDULED_DISPATCH_WINDOW_MINUTES = 15;
 
 export function createBookingService({ fareService }) {
   async function createBooking(userId, data) {
     const { idempotencyKey, vehicleType, mode, pickup, drop, zone, scheduledFor } = data;
 
-    // Idempotency check: return the existing booking if the key was used before.
+    // Idempotency: return the existing booking if this key was already used.
     const existing = await Booking.findOne({ idempotencyKey });
     if (existing) return { booking: existing, wasIdempotent: true };
 
-    // Customer profile must exist.
     const customer = await Customer.findOne({ userId });
     if (!customer) throw errors.notFound('Customer profile not found');
 
-    // Get fare quote and pin the config version.
+    // Pin the fare config version at booking creation time. Never recalculated.
     const fareQuote = await fareService.getFareQuote({
       vehicleType,
       zone,
@@ -58,14 +57,21 @@ export function createBookingService({ fareService }) {
       );
     }
 
-    // Use a transaction: if anything fails after the Booking is created
-    // (e.g. customer counter update), the whole thing rolls back.
     const session = await mongoose.startSession();
     let booking;
     try {
       await session.withTransaction(async () => {
         const [created] = await Booking.create([bookingData], { session });
         booking = created;
+
+        // For SCHEDULED bookings, create the durable dispatch job inside the
+        // same transaction so the job never exists without a booking.
+        if (mode === 'SCHEDULED') {
+          await ScheduledDispatchJob.create(
+            [{ bookingId: created._id, runAt: created.scheduleWindowOpenAt }],
+            { session },
+          );
+        }
       });
     } finally {
       await session.endSession();
@@ -77,12 +83,9 @@ export function createBookingService({ fareService }) {
   async function getBooking(bookingId, userId, role) {
     const booking = await Booking.findById(bookingId);
     if (!booking) throw errors.notFound('Booking not found');
-
-    // Customers can only see their own bookings.
     if (role === 'CUSTOMER' && booking.userId.toString() !== userId) {
       throw errors.forbidden('You can only view your own bookings');
     }
-
     return booking;
   }
 
@@ -101,19 +104,19 @@ export function createBookingService({ fareService }) {
     const booking = await Booking.findById(bookingId);
     if (!booking) throw errors.notFound('Booking not found');
 
-    // Ownership check
     if (role === 'CUSTOMER' && booking.userId.toString() !== userId) {
       throw errors.forbidden('You can only cancel your own bookings');
     }
 
     const cancellableStatuses = ['SEARCHING', 'ACCEPTED'];
     if (!cancellableStatuses.includes(booking.status)) {
-      throw errors.businessRule(
-        `Cannot cancel a booking with status ${booking.status}`,
-        { currentStatus: booking.status, cancellableStatuses },
-      );
+      throw errors.businessRule(`Cannot cancel a booking with status ${booking.status}`, {
+        currentStatus: booking.status,
+        cancellableStatuses,
+      });
     }
 
+    // Atomic update guards against concurrent cancellation.
     const updated = await Booking.findOneAndUpdate(
       { _id: bookingId, status: { $in: cancellableStatuses } },
       {
@@ -127,17 +130,13 @@ export function createBookingService({ fareService }) {
       { new: true },
     );
 
-    // Race condition: another process cancelled it between our read and write.
     if (!updated) throw errors.conflict('Booking was already updated by another process');
-
     return updated;
   }
 
-  // Admin: list all bookings across customers
-  async function listAllBookings({ page = 1, limit = 20, status, customerId } = {}) {
+  async function listAllBookings({ page = 1, limit = 20, status } = {}) {
     const filter = {};
     if (status) filter.status = status;
-    if (customerId) filter.customerId = customerId;
     const total = await Booking.countDocuments(filter);
     const bookings = await Booking.find(filter)
       .sort({ createdAt: -1 })

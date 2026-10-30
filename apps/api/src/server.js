@@ -3,6 +3,7 @@ import { loadEnv, EnvValidationError } from './config/env.js';
 import { createLogger } from './config/logger.js';
 import { connectMongo, disconnectMongo, checkDatabase } from './db/connection.js';
 import { CloudinaryStorageProvider } from './shared/storage/CloudinaryStorageProvider.js';
+import { createScheduledWorker } from './modules/dispatch/scheduled.worker.js';
 import { createApp } from './app.js';
 
 if (existsSync('.env')) process.loadEnvFile('.env');
@@ -12,14 +13,13 @@ try {
   config = loadEnv();
 } catch (err) {
   if (err instanceof EnvValidationError) {
-    console.error(err.message); // eslint-disable-line no-console
+    console.error(err.message);
     process.exit(1);
   }
   throw err;
 }
 
 const logger = createLogger({ level: config.logLevel });
-
 const version = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
 ).version;
@@ -28,17 +28,22 @@ async function main() {
   await connectMongo({ uri: config.mongo.uri, dbName: config.mongo.dbName, logger });
 
   const storageProvider = new CloudinaryStorageProvider(config.cloudinary);
-
   const app = createApp({ config, logger, checkDatabase, storageProvider, version });
+
   const server = app.listen(config.port, () => {
     logger.info({ port: config.port, env: config.nodeEnv }, 'api listening');
   });
+
+  // Start the scheduled dispatch worker.
+  const scheduledWorker = createScheduledWorker({ logger });
+  scheduledWorker.start();
 
   let shuttingDown = false;
   const shutdown = (signal) => {
     if (shuttingDown) return;
     shuttingDown = true;
     logger.info({ signal }, 'shutting down');
+    scheduledWorker.stop();
     const force = setTimeout(() => process.exit(1), 10_000);
     force.unref();
     server.close(async () => {
@@ -46,6 +51,7 @@ async function main() {
       process.exit(0);
     });
   };
+
   process.on('SIGINT', () => shutdown('SIGINT'));
   process.on('SIGTERM', () => shutdown('SIGTERM'));
 }

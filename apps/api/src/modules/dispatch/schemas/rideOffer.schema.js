@@ -16,7 +16,7 @@ const rideOfferSchema = new Schema(
       default: 'PENDING',
       index: true,
     },
-    expiresAt: { type: Date, required: true, index: true },
+    expiresAt: { type: Date, required: true },
     // Distance from captain to pickup at the time of offer (metres, haversine).
     distanceToPickupMetres: { type: Number },
     // Distance from captain to drop (metres, haversine). Used for Rule B.

@@ -32,7 +32,7 @@ export function createApp({ config, logger, checkDatabase, storageProvider, vers
   const healthService = createHealthService({ checkDatabase, version });
   const authService = createAuthService({ authConfig: config.auth });
 
-  app.use(API_BASE_PATH, createApiRouter({ healthService, authService, storageProvider }));
+  app.use(API_BASE_PATH, createApiRouter({ healthService, authService, storageProvider, logger }));
 
   app.use(notFound);
   app.use(errorHandler(logger));
