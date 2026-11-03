@@ -8,8 +8,9 @@ import { createDocumentRouter } from './modules/documents/document.routes.js';
 import { createFareRouter } from './modules/fares/fare.routes.js';
 import { createBookingRouter } from './modules/bookings/booking.routes.js';
 import { createDispatchRouter } from './modules/dispatch/dispatch.routes.js';
+import { createRideRouter } from './modules/rides/ride.routes.js';
 
-export function createApiRouter({ healthService, authService, storageProvider, logger }) {
+export function createApiRouter({ healthService, authService, storageProvider, logger, io }) {
   const router = Router();
   router.use('/health', createHealthRouter({ healthService }));
   router.use('/auth', createAuthRouter({ authService }));
@@ -20,5 +21,6 @@ export function createApiRouter({ healthService, authService, storageProvider, l
   router.use('/fares', createFareRouter({ authService }));
   router.use('/bookings', createBookingRouter({ authService }));
   router.use('/dispatch', createDispatchRouter({ authService, logger }));
+  router.use('/rides', createRideRouter({ authService, io }));
   return router;
 }
