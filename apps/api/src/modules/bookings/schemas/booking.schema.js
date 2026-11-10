@@ -46,13 +46,13 @@ const bookingSchema = new Schema(
     status: {
       type: String,
       enum: [
-        'SEARCHING',    // Dispatch is looking for a captain
-        'ACCEPTED',     // A captain has accepted
-        'ARRIVED',      // Captain is at the pickup point
-        'IN_PROGRESS',  // Ride has started (PIN verified)
-        'COMPLETED',    // Ride finished
-        'CANCELLED',    // Cancelled by customer, captain or system
-        'NO_CAPTAIN',   // Search exhausted with no captain found
+        'SEARCHING', // Dispatch is looking for a captain
+        'ACCEPTED', // A captain has accepted
+        'ARRIVED', // Captain is at the pickup point
+        'IN_PROGRESS', // Ride has started (PIN verified)
+        'COMPLETED', // Ride finished
+        'CANCELLED', // Cancelled by customer, captain or system
+        'NO_CAPTAIN', // Search exhausted with no captain found
       ],
       default: 'SEARCHING',
       index: true,

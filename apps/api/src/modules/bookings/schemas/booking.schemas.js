@@ -3,7 +3,7 @@ import { VEHICLE_TYPES, BOOKING_MODES } from '@vrumm/contracts';
 
 const coordinatesSchema = z.tuple([
   z.number().min(-180).max(180), // longitude
-  z.number().min(-90).max(90),   // latitude
+  z.number().min(-90).max(90), // latitude
 ]);
 
 const locationSchema = z.object({
@@ -27,10 +27,10 @@ export const createBookingSchema = z
     // Required for SCHEDULED bookings
     scheduledFor: z.string().datetime().optional(),
   })
-  .refine(
-    (d) => d.mode !== 'SCHEDULED' || d.scheduledFor,
-    { message: 'scheduledFor is required for SCHEDULED bookings', path: ['scheduledFor'] },
-  )
+  .refine((d) => d.mode !== 'SCHEDULED' || d.scheduledFor, {
+    message: 'scheduledFor is required for SCHEDULED bookings',
+    path: ['scheduledFor'],
+  })
   .refine(
     (d) => {
       if (!d.scheduledFor) return true;
@@ -51,6 +51,14 @@ export const listBookingsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   status: z
-    .enum(['SEARCHING', 'ACCEPTED', 'ARRIVED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'NO_CAPTAIN'])
+    .enum([
+      'SEARCHING',
+      'ACCEPTED',
+      'ARRIVED',
+      'IN_PROGRESS',
+      'COMPLETED',
+      'CANCELLED',
+      'NO_CAPTAIN',
+    ])
     .optional(),
 });

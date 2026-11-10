@@ -21,9 +21,23 @@ export function createVehicleRouter({ authService }) {
       .catch(next);
   }
 
-  router.post('/', auth, requireRole('CAPTAIN'), ensureProfile, validate({ body: registerVehicleSchema }), controller.registerVehicle);
+  router.post(
+    '/',
+    auth,
+    requireRole('CAPTAIN'),
+    ensureProfile,
+    validate({ body: registerVehicleSchema }),
+    controller.registerVehicle,
+  );
   router.get('/', auth, requireRole('CAPTAIN'), ensureProfile, controller.getVehicle);
-  router.patch('/', auth, requireRole('CAPTAIN'), ensureProfile, validate({ body: updateVehicleSchema }), controller.updateVehicle);
+  router.patch(
+    '/',
+    auth,
+    requireRole('CAPTAIN'),
+    ensureProfile,
+    validate({ body: updateVehicleSchema }),
+    controller.updateVehicle,
+  );
 
   return router;
 }

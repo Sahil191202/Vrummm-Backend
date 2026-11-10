@@ -25,7 +25,10 @@ vi.mock('../schemas/vehicle.schema.js', () => {
       }
       return null;
     }),
-    _reset() { store.clear(); seq = 0; },
+    _reset() {
+      store.clear();
+      seq = 0;
+    },
   };
   return { Vehicle };
 });
@@ -37,12 +40,19 @@ vi.mock('../../captains/schemas/captain.schema.js', () => ({
 const { Vehicle } = await import('../schemas/vehicle.schema.js');
 const service = createVehicleService();
 
-beforeEach(() => { Vehicle._reset(); vi.clearAllMocks(); });
+beforeEach(() => {
+  Vehicle._reset();
+  vi.clearAllMocks();
+});
 
 describe('registerVehicle', () => {
   it('creates a vehicle and returns it', async () => {
     const v = await service.registerVehicle('u1', 'c1', {
-      type: 'BIKE', make: 'Honda', model: 'Activa', year: 2022, registrationNumber: 'MH01AB1234',
+      type: 'BIKE',
+      make: 'Honda',
+      model: 'Activa',
+      year: 2022,
+      registrationNumber: 'MH01AB1234',
     });
     expect(v.registrationNumber).toBe('MH01AB1234');
     expect(v.captainId).toBe('c1');
@@ -50,11 +60,19 @@ describe('registerVehicle', () => {
 
   it('throws CONFLICT on duplicate registration', async () => {
     await service.registerVehicle('u1', 'c1', {
-      type: 'BIKE', make: 'Honda', model: 'Activa', year: 2022, registrationNumber: 'MH01AB1234',
+      type: 'BIKE',
+      make: 'Honda',
+      model: 'Activa',
+      year: 2022,
+      registrationNumber: 'MH01AB1234',
     });
     await expect(
       service.registerVehicle('u1', 'c1', {
-        type: 'AUTO', make: 'Bajaj', model: 'RE', year: 2020, registrationNumber: 'MH01CD5678',
+        type: 'AUTO',
+        make: 'Bajaj',
+        model: 'RE',
+        year: 2020,
+        registrationNumber: 'MH01CD5678',
       }),
     ).rejects.toMatchObject({ code: 'CONFLICT' });
   });

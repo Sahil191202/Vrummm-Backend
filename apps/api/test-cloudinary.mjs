@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import https from 'https';
 import crypto from 'crypto';
 import { readFileSync } from 'fs';

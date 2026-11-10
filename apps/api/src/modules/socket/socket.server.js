@@ -2,12 +2,7 @@ import { Server } from 'socket.io';
 import { socketRooms } from '@vrumm/contracts';
 import { ROLES } from '../rbac/permissions.js';
 
-const ADMIN_ROLES = new Set([
-  ROLES.SUPER_ADMIN,
-  ROLES.OPERATIONS,
-  ROLES.SUPPORT,
-  ROLES.FINANCE,
-]);
+const ADMIN_ROLES = new Set([ROLES.SUPER_ADMIN, ROLES.OPERATIONS, ROLES.SUPPORT, ROLES.FINANCE]);
 
 // Build the Socket.IO server and attach it to an HTTP server.
 // authService is injected so we can verify the JWT on connection.
@@ -25,9 +20,7 @@ export function createSocketServer(httpServer, { authService, corsOrigins, logge
 
   // ── Auth middleware ───────────────────────────────────────────────────────
   io.use((socket, next) => {
-    const token =
-      socket.handshake.auth?.token ??
-      socket.handshake.query?.token;
+    const token = socket.handshake.auth?.token ?? socket.handshake.query?.token;
 
     if (!token) {
       return next(new Error('Authentication required'));

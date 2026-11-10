@@ -24,9 +24,30 @@ export function createCustomerRouter({ authService }) {
   }
 
   router.get('/me', auth, requireRole('CUSTOMER'), ensureProfile, controller.getProfile);
-  router.patch('/me', auth, requireRole('CUSTOMER'), ensureProfile, validate({ body: updateCustomerProfileSchema }), controller.updateProfile);
-  router.post('/me/saved-places', auth, requireRole('CUSTOMER'), ensureProfile, validate({ body: addSavedPlaceSchema }), controller.addSavedPlace);
-  router.delete('/me/saved-places/:placeId', auth, requireRole('CUSTOMER'), ensureProfile, validate({ params: placeIdParamSchema }), controller.removeSavedPlace);
+  router.patch(
+    '/me',
+    auth,
+    requireRole('CUSTOMER'),
+    ensureProfile,
+    validate({ body: updateCustomerProfileSchema }),
+    controller.updateProfile,
+  );
+  router.post(
+    '/me/saved-places',
+    auth,
+    requireRole('CUSTOMER'),
+    ensureProfile,
+    validate({ body: addSavedPlaceSchema }),
+    controller.addSavedPlace,
+  );
+  router.delete(
+    '/me/saved-places/:placeId',
+    auth,
+    requireRole('CUSTOMER'),
+    ensureProfile,
+    validate({ params: placeIdParamSchema }),
+    controller.removeSavedPlace,
+  );
 
   return router;
 }

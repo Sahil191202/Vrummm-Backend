@@ -15,7 +15,7 @@ export const addSavedPlaceSchema = z.object({
   address: z.string().trim().min(1).max(300),
   coordinates: z.tuple([
     z.number().min(-180).max(180), // longitude
-    z.number().min(-90).max(90),   // latitude
+    z.number().min(-90).max(90), // latitude
   ]),
 });
 

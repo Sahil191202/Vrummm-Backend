@@ -25,18 +25,8 @@ export function createRideRouter({ authService, io }) {
   const auth = authenticate(authService);
 
   // Both captain and customer can access their own ride.
-  router.get(
-    '/mine',
-    auth,
-    validate({ query: listQuerySchema }),
-    controller.listMyRides,
-  );
-  router.get(
-    '/:rideId',
-    auth,
-    validate({ params: rideIdParamSchema }),
-    controller.getRide,
-  );
+  router.get('/mine', auth, validate({ query: listQuerySchema }), controller.listMyRides);
+  router.get('/:rideId', auth, validate({ params: rideIdParamSchema }), controller.getRide);
   router.post(
     '/:rideId/cancel',
     auth,

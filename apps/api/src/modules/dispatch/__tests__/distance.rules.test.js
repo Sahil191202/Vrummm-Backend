@@ -6,14 +6,14 @@ import {
 } from '../distance.rules.js';
 
 // Mumbai test coordinates
-const CHURCHGATE = [72.8777, 18.9322];   // pickup
-const BANDRA     = [72.8347, 19.0543];   // drop
-const DADAR      = [72.8407, 19.0178];   // captain near pickup
-const ANDHERI    = [72.8479, 19.1197];   // captain far north — closer to drop than pickup
+const CHURCHGATE = [72.8277, 18.9322]; // pickup
+const BANDRA = [72.8347, 19.0543]; // drop
+const CST = [72.8354, 18.94]; // captain near pickup (~1.2km to Churchgate, ~12.7km to Bandra)
+const ANDHERI = [72.8479, 19.1197]; // captain far north — closer to drop than pickup
 
 describe('checkPickupRadius', () => {
   it('passes when captain is within radius', () => {
-    const result = checkPickupRadius(DADAR, CHURCHGATE, 10_000);
+    const result = checkPickupRadius(CST, CHURCHGATE, 10_000);
     expect(result.pass).toBe(true);
     expect(result.distanceMetres).toBeGreaterThan(0);
   });
@@ -25,16 +25,16 @@ describe('checkPickupRadius', () => {
   });
 
   it('distance is symmetric', () => {
-    const ab = checkPickupRadius(DADAR, CHURCHGATE, 99_999);
-    const ba = checkPickupRadius(CHURCHGATE, DADAR, 99_999);
+    const ab = checkPickupRadius(CST, CHURCHGATE, 99_999);
+    const ba = checkPickupRadius(CHURCHGATE, CST, 99_999);
     expect(Math.abs(ab.distanceMetres - ba.distanceMetres)).toBeLessThan(1);
   });
 });
 
 describe('checkRelativeDistance', () => {
   it('passes when captain is closer to pickup than drop (BIKE, rule enabled)', () => {
-    // DADAR is ~1.4km from CHURCHGATE pickup, ~2.7km from BANDRA drop
-    const result = checkRelativeDistance(DADAR, CHURCHGATE, BANDRA, 'BIKE');
+    // CST is ~1.2km from CHURCHGATE pickup, ~12.7km from BANDRA drop
+    const result = checkRelativeDistance(CST, CHURCHGATE, BANDRA, 'BIKE');
     expect(result.pass).toBe(true);
     expect(result.ruleEnabled).toBe(true);
   });
@@ -55,7 +55,7 @@ describe('checkRelativeDistance', () => {
 
 describe('evaluateCaptainEligibility', () => {
   it('eligible when both rules pass', () => {
-    const result = evaluateCaptainEligibility(DADAR, CHURCHGATE, BANDRA, 'BIKE', 10_000);
+    const result = evaluateCaptainEligibility(CST, CHURCHGATE, BANDRA, 'BIKE', 10_000);
     expect(result.eligible).toBe(true);
     expect(result.distanceToPickupMetres).toBeGreaterThan(0);
     expect(result.distanceToDropMetres).toBeGreaterThan(0);

@@ -7,10 +7,7 @@ import { haversineMetres } from '../../shared/haversine.js';
 // distanceMetres: straight-line haversine distance of the passenger's route.
 // durationMinutes: estimated trip duration (passed in; can be 0 for instant quote).
 export function calculateFare({ config, distanceMetres, durationMinutes = 0 }) {
-  const billableDistanceMetres = Math.max(
-    distanceMetres,
-    config.minimumBillableDistanceMetres,
-  );
+  const billableDistanceMetres = Math.max(distanceMetres, config.minimumBillableDistanceMetres);
   const billableDistanceKm = billableDistanceMetres / 1000;
 
   const baseFare = config.baseFarePaise;
@@ -36,8 +33,16 @@ export function calculateFare({ config, distanceMetres, durationMinutes = 0 }) {
   return {
     breakdown: {
       baseFarePaise: baseFare,
-      distanceCharge: { distanceMetres: billableDistanceMetres, ratePerKmPaise: config.perKmPaise, amountPaise: distanceCharge },
-      timeCharge: { durationMinutes, ratePerMinutePaise: config.perMinutePaise, amountPaise: timeCharge },
+      distanceCharge: {
+        distanceMetres: billableDistanceMetres,
+        ratePerKmPaise: config.perKmPaise,
+        amountPaise: distanceCharge,
+      },
+      timeCharge: {
+        durationMinutes,
+        ratePerMinutePaise: config.perMinutePaise,
+        amountPaise: timeCharge,
+      },
       minimumApplied,
       subtotalPaise: subtotal,
       taxes: taxLines,

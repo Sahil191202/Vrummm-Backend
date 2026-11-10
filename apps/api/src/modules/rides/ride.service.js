@@ -47,11 +47,17 @@ export function createRideService({ io } = {}) {
 
     await Booking.updateOne({ _id: bookingId }, { $set: { rideId: ride._id } }, { session });
 
-    await emit.toUser(io, booking.userId, SOCKET_EVENTS.RIDE_STATE_CHANGED, {
-      rideId: ride._id,
-      status: 'ACCEPTED',
-      bookingId,
-    }, session);
+    await emit.toUser(
+      io,
+      booking.userId,
+      SOCKET_EVENTS.RIDE_STATE_CHANGED,
+      {
+        rideId: ride._id,
+        status: 'ACCEPTED',
+        bookingId,
+      },
+      session,
+    );
 
     // PIN returned once to the captain — never stored plaintext.
     return { ride, pin };
@@ -315,10 +321,9 @@ export function createRideService({ io } = {}) {
     const ride = await Ride.findOne({ _id: rideId, captainUserId });
     if (!ride) throw errors.notFound('Ride not found');
     if (ride.status !== expectedStatus) {
-      throw errors.businessRule(
-        `Expected ride status ${expectedStatus}, got ${ride.status}`,
-        { currentStatus: ride.status },
-      );
+      throw errors.businessRule(`Expected ride status ${expectedStatus}, got ${ride.status}`, {
+        currentStatus: ride.status,
+      });
     }
     return ride;
   }

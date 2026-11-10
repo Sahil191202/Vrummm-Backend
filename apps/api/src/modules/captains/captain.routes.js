@@ -30,14 +30,52 @@ export function createCaptainRouter({ authService }) {
 
   // Captain self-service
   router.get('/me', auth, requireRole('CAPTAIN'), ensureProfile, controller.getMyProfile);
-  router.patch('/me', auth, requireRole('CAPTAIN'), ensureProfile, validate({ body: updateCaptainProfileSchema }), controller.updateMyProfile);
-  router.patch('/me/availability', auth, requireRole('CAPTAIN'), ensureProfile, validate({ body: setAvailabilitySchema }), controller.setAvailability);
-  router.get('/me/eligibility', auth, requireRole('CAPTAIN'), ensureProfile, controller.checkEligibility);
+  router.patch(
+    '/me',
+    auth,
+    requireRole('CAPTAIN'),
+    ensureProfile,
+    validate({ body: updateCaptainProfileSchema }),
+    controller.updateMyProfile,
+  );
+  router.patch(
+    '/me/availability',
+    auth,
+    requireRole('CAPTAIN'),
+    ensureProfile,
+    validate({ body: setAvailabilitySchema }),
+    controller.setAvailability,
+  );
+  router.get(
+    '/me/eligibility',
+    auth,
+    requireRole('CAPTAIN'),
+    ensureProfile,
+    controller.checkEligibility,
+  );
 
   // Admin
-  router.get('/', auth, requirePermission(PERMISSIONS.CAPTAINS_READ), validate({ query: listCaptainsQuerySchema }), controller.listCaptains);
-  router.get('/:captainId', auth, requirePermission(PERMISSIONS.CAPTAINS_READ), validate({ params: captainIdParamSchema }), controller.getCaptain);
-  router.patch('/:captainId/approval', auth, requirePermission(PERMISSIONS.CAPTAINS_APPROVE), validate({ params: captainIdParamSchema, body: setApprovalStatusSchema }), controller.setApprovalStatus);
+  router.get(
+    '/',
+    auth,
+    requirePermission(PERMISSIONS.CAPTAINS_READ),
+    validate({ query: listCaptainsQuerySchema }),
+    controller.listCaptains,
+  );
+  router.get(
+    '/:captainId',
+    auth,
+    requirePermission(PERMISSIONS.CAPTAINS_READ),
+    validate({ params: captainIdParamSchema }),
+    controller.getCaptain,
+  );
+  router.patch(
+    '/:captainId/approval',
+    auth,
+    requirePermission(PERMISSIONS.CAPTAINS_APPROVE),
+    validate({ params: captainIdParamSchema, body: setApprovalStatusSchema }),
+    controller.setApprovalStatus,
+  );
 
   return router;
 }

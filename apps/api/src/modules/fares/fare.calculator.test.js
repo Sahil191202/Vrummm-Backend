@@ -4,10 +4,10 @@ import { calculateFare } from './fare.calculator.js';
 const baseConfig = {
   _id: 'cfg1',
   version: 1,
-  baseFarePaise: 2500,       // ₹25
-  perKmPaise: 1200,          // ₹12/km
-  perMinutePaise: 150,       // ₹1.50/min
-  minimumFarePaise: 3500,    // ₹35
+  baseFarePaise: 2500, // ₹25
+  perKmPaise: 1200, // ₹12/km
+  perMinutePaise: 150, // ₹1.50/min
+  minimumFarePaise: 3500, // ₹35
   minimumBillableDistanceMetres: 1000,
   taxes: [{ label: 'GST', basisPoints: 500 }], // 5%
 };
@@ -16,7 +16,7 @@ describe('calculateFare', () => {
   it('applies base + distance + time charges correctly', () => {
     const result = calculateFare({
       config: baseConfig,
-      distanceMetres: 5000,  // 5 km
+      distanceMetres: 5000, // 5 km
       durationMinutes: 10,
     });
     // base 2500 + dist 6000 (5*1200) + time 1500 (10*150) = 10000
@@ -32,14 +32,14 @@ describe('calculateFare', () => {
   });
 
   it('applies minimum fare when trip is too short', () => {
-    const result = calculateFare({
+    const _result = calculateFare({
       config: baseConfig,
       distanceMetres: 500, // below minimumBillableDistanceMetres
       durationMinutes: 2,
     });
     // base 2500 + dist 1200 (1km min billable) + time 300 = 4000 > 3500 minimum
     // so minimum NOT applied here — let us use a shorter trip
-    const result2 = calculateFare({
+    const _result2 = calculateFare({
       config: baseConfig,
       distanceMetres: 200,
       durationMinutes: 0,

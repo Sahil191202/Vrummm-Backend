@@ -10,11 +10,9 @@ vi.mock('../schemas/ride.schema.js', () => {
       for (const r of store.values()) {
         const idMatch = !filter._id || String(r._id) === String(filter._id);
         const captainMatch =
-          !filter.captainUserId ||
-          String(r.captainUserId) === String(filter.captainUserId);
+          !filter.captainUserId || String(r.captainUserId) === String(filter.captainUserId);
         const customerMatch =
-          !filter.customerUserId ||
-          String(r.customerUserId) === String(filter.customerUserId);
+          !filter.customerUserId || String(r.customerUserId) === String(filter.customerUserId);
         const statusMatch = !filter.status || r.status === filter.status;
         if (idMatch && captainMatch && customerMatch && statusMatch) return { ...r };
       }
@@ -40,9 +38,7 @@ vi.mock('../schemas/ride.schema.js', () => {
       if (!r) return null;
       const statusCond = filter.status;
       if (statusCond) {
-        const ok = statusCond.$in
-          ? statusCond.$in.includes(r.status)
-          : r.status === statusCond;
+        const ok = statusCond.$in ? statusCond.$in.includes(r.status) : r.status === statusCond;
         if (!ok) return null;
       }
       if (update.$set) Object.assign(r, update.$set);
@@ -154,9 +150,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   // Re-assert after clearAllMocks so PIN tests always get consistent behaviour.
   vi.spyOn(bcrypt, 'hash').mockImplementation(async (val) => `hashed:${val}`);
-  vi.spyOn(bcrypt, 'compare').mockImplementation(
-    async (plain, hash) => hash === `hashed:${plain}`,
-  );
+  vi.spyOn(bcrypt, 'compare').mockImplementation(async (plain, hash) => hash === `hashed:${plain}`);
 });
 
 // ── captainArrived ─────────────────────────────────────────────────────────────
@@ -216,13 +210,10 @@ describe('verifyPinAndStart', () => {
       pinAttempts: 0,
       pinLockedUntil: null,
     });
-    await expect(
-      service.verifyPinAndStart('p2', 'cust-u1', '9999'),
-    ).rejects.toMatchObject({ code: 'BUSINESS_RULE_VIOLATION' });
-    expect(Ride.updateOne).toHaveBeenCalledWith(
-      { _id: 'p2' },
-      { $set: { pinAttempts: 1 } },
-    );
+    await expect(service.verifyPinAndStart('p2', 'cust-u1', '9999')).rejects.toMatchObject({
+      code: 'BUSINESS_RULE_VIOLATION',
+    });
+    expect(Ride.updateOne).toHaveBeenCalledWith({ _id: 'p2' }, { $set: { pinAttempts: 1 } });
   });
 
   it('locks the ride after max failed attempts', async () => {
@@ -234,9 +225,9 @@ describe('verifyPinAndStart', () => {
       pinAttempts: 4,
       pinLockedUntil: null,
     });
-    await expect(
-      service.verifyPinAndStart('p3', 'cust-u1', '9999'),
-    ).rejects.toMatchObject({ code: 'BUSINESS_RULE_VIOLATION' });
+    await expect(service.verifyPinAndStart('p3', 'cust-u1', '9999')).rejects.toMatchObject({
+      code: 'BUSINESS_RULE_VIOLATION',
+    });
     const call = Ride.updateOne.mock.calls[0];
     expect(call[1].$set.pinLockedUntil).toBeInstanceOf(Date);
   });
@@ -250,9 +241,9 @@ describe('verifyPinAndStart', () => {
       pinAttempts: 5,
       pinLockedUntil: new Date(Date.now() + 60_000),
     });
-    await expect(
-      service.verifyPinAndStart('p4', 'cust-u1', '1234'),
-    ).rejects.toMatchObject({ code: 'BUSINESS_RULE_VIOLATION' });
+    await expect(service.verifyPinAndStart('p4', 'cust-u1', '1234')).rejects.toMatchObject({
+      code: 'BUSINESS_RULE_VIOLATION',
+    });
   });
 
   it('throws BUSINESS_RULE_VIOLATION when ride is not ARRIVED', async () => {
@@ -264,9 +255,9 @@ describe('verifyPinAndStart', () => {
       pinAttempts: 0,
       pinLockedUntil: null,
     });
-    await expect(
-      service.verifyPinAndStart('p5', 'cust-u1', '1234'),
-    ).rejects.toMatchObject({ code: 'BUSINESS_RULE_VIOLATION' });
+    await expect(service.verifyPinAndStart('p5', 'cust-u1', '1234')).rejects.toMatchObject({
+      code: 'BUSINESS_RULE_VIOLATION',
+    });
   });
 });
 
@@ -375,9 +366,9 @@ describe('cancelRide', () => {
       captainUserId: 'cap-u1',
       customerUserId: 'cust-u1',
     });
-    await expect(
-      service.cancelRide('c4', 'intruder', 'CAPTAIN'),
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(service.cancelRide('c4', 'intruder', 'CAPTAIN')).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+    });
   });
 });
 
@@ -399,9 +390,9 @@ describe('getRide', () => {
       customerUserId: 'cust-u1',
       captainUserId: 'cap-u1',
     });
-    await expect(
-      service.getRide('g2', 'stranger', 'CUSTOMER'),
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(service.getRide('g2', 'stranger', 'CUSTOMER')).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+    });
   });
 
   it('throws NOT_FOUND for an unknown ride', async () => {

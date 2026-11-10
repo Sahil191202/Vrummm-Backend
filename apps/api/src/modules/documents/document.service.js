@@ -5,7 +5,11 @@ import { errors } from '../../shared/AppError.js';
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 
 export function createDocumentService({ storageProvider }) {
-  async function uploadDocument(userId, captainId, { buffer, mimetype, originalName, documentType, expiresAt }) {
+  async function uploadDocument(
+    userId,
+    captainId,
+    { buffer, mimetype, originalName, documentType, expiresAt },
+  ) {
     if (buffer.length > MAX_FILE_SIZE_BYTES) {
       throw errors.badRequest('File exceeds the 10 MB limit');
     }

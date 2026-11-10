@@ -12,7 +12,14 @@ import { createApiRouter } from './routes.js';
 
 // io is injected from server.js after the Socket.IO server is created.
 // It is null during tests so socket emits are skipped gracefully.
-export function createApp({ config, logger, checkDatabase, storageProvider, io = null, version = 'unknown' }) {
+export function createApp({
+  config,
+  logger,
+  checkDatabase,
+  storageProvider,
+  io = null,
+  version = 'unknown',
+}) {
   const app = express();
   app.disable('x-powered-by');
 
@@ -34,7 +41,10 @@ export function createApp({ config, logger, checkDatabase, storageProvider, io =
   const healthService = createHealthService({ checkDatabase, version });
   const authService = createAuthService({ authConfig: config.auth });
 
-  app.use(API_BASE_PATH, createApiRouter({ healthService, authService, storageProvider, logger, io }));
+  app.use(
+    API_BASE_PATH,
+    createApiRouter({ healthService, authService, storageProvider, logger, io }),
+  );
 
   app.use(notFound);
   app.use(errorHandler(logger));

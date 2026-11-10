@@ -18,9 +18,7 @@ export class CloudinaryStorageProvider extends StorageProvider {
 
   async uploadDocument({ buffer, mimetype, originalName, folder }) {
     if (!ALLOWED_MIMETYPES.includes(mimetype)) {
-      throw errors.badRequest(
-        `Unsupported file type: ${mimetype}. Allowed: JPEG, PNG, WEBP, PDF`,
-      );
+      throw errors.badRequest(`Unsupported file type: ${mimetype}. Allowed: JPEG, PNG, WEBP, PDF`);
     }
 
     const base64 = buffer.toString('base64');

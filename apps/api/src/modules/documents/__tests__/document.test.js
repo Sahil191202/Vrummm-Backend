@@ -6,9 +6,10 @@ vi.mock('../schemas/document.schema.js', () => {
   const store = new Map();
   let seq = 0;
   const Document = {
-    find: vi.fn(async ({ captainId } = {}) =>
-      [...store.values()].filter((d) => d.captainId === captainId),
-    ),
+    find: vi.fn(({ captainId } = {}) => ({
+      sort: vi.fn(async () => [...store.values()].filter((d) => d.captainId === captainId)),
+    })),
+
     findById: vi.fn(async (id) => store.get(String(id)) ?? null),
     findByIdAndUpdate: vi.fn(async (id, update) => {
       const doc = store.get(String(id));
@@ -24,9 +25,25 @@ vi.mock('../schemas/document.schema.js', () => {
       return r;
     }),
     deleteMany: vi.fn(async () => {}),
-    _reset() { store.clear(); seq = 0; },
+    _reset() {
+      store.clear();
+      seq = 0;
+    },
   };
-  return { Document, REQUIRED_DOCUMENT_TYPES: ['DRIVING_LICENCE_FRONT', 'VEHICLE_RC'] };
+  return {
+    Document,
+    DOCUMENT_TYPES: [
+      'AADHAAR_FRONT',
+      'AADHAAR_BACK',
+      'PAN_CARD',
+      'DRIVING_LICENCE_FRONT',
+      'DRIVING_LICENCE_BACK',
+      'VEHICLE_RC',
+      'VEHICLE_INSURANCE',
+      'PROFILE_PHOTO',
+    ],
+    REQUIRED_DOCUMENT_TYPES: ['DRIVING_LICENCE_FRONT', 'VEHICLE_RC'],
+  };
 });
 
 vi.mock('../../captains/schemas/captain.schema.js', () => ({
@@ -36,7 +53,10 @@ vi.mock('../../captains/schemas/captain.schema.js', () => ({
 const { Document } = await import('../schemas/document.schema.js');
 const service = createDocumentService({ storageProvider: mockStorageProvider });
 
-beforeEach(() => { Document._reset(); vi.clearAllMocks(); });
+beforeEach(() => {
+  Document._reset();
+  vi.clearAllMocks();
+});
 
 describe('uploadDocument', () => {
   it('stores a document record after upload', async () => {
@@ -54,8 +74,10 @@ describe('uploadDocument', () => {
     const bigBuffer = Buffer.alloc(11 * 1024 * 1024);
     await expect(
       service.uploadDocument('u1', 'c1', {
-        buffer: bigBuffer, mimetype: 'image/jpeg',
-        originalName: 'big.jpg', documentType: 'PAN_CARD',
+        buffer: bigBuffer,
+        mimetype: 'image/jpeg',
+        originalName: 'big.jpg',
+        documentType: 'PAN_CARD',
       }),
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
   });
@@ -64,11 +86,14 @@ describe('uploadDocument', () => {
 describe('reviewDocument', () => {
   it('updates the status to APPROVED', async () => {
     const doc = await service.uploadDocument('u1', 'c1', {
-      buffer: Buffer.from('x'), mimetype: 'image/jpeg',
-      originalName: 'd.jpg', documentType: 'DRIVING_LICENCE_FRONT',
+      buffer: Buffer.from('x'),
+      mimetype: 'image/jpeg',
+      originalName: 'd.jpg',
+      documentType: 'DRIVING_LICENCE_FRONT',
     });
     const reviewed = await service.reviewDocument(doc._id, {
-      status: 'APPROVED', reviewerUserId: 'admin1',
+      status: 'APPROVED',
+      reviewerUserId: 'admin1',
     });
     expect(reviewed.status).toBe('APPROVED');
   });

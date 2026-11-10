@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createCustomerService } from '../customer.service.js';
-import { errors } from '../../../shared/AppError.js';
 
 vi.mock('../schemas/customer.schema.js', () => {
   const store = new Map();
@@ -16,7 +15,10 @@ vi.mock('../schemas/customer.schema.js', () => {
       store.set(id, record);
       return record;
     }),
-    _reset() { store.clear(); seq = 0; },
+    _reset() {
+      store.clear();
+      seq = 0;
+    },
   };
   return { Customer };
 });
@@ -31,7 +33,10 @@ const { Customer } = await import('../schemas/customer.schema.js');
 
 const service = createCustomerService();
 
-beforeEach(() => { Customer._reset(); vi.clearAllMocks(); });
+beforeEach(() => {
+  Customer._reset();
+  vi.clearAllMocks();
+});
 
 describe('getOrCreateProfile', () => {
   it('creates a profile on first call', async () => {
@@ -50,7 +55,14 @@ describe('addSavedPlace', () => {
   it('adds a place to the profile', async () => {
     // Pre-create profile so findOne returns it
     Customer._reset();
-    const initial = { _id: '1', userId: 'u1', savedPlaces: [], save: vi.fn(async function() { return this; }) };
+    const initial = {
+      _id: '1',
+      userId: 'u1',
+      savedPlaces: [],
+      save: vi.fn(async function () {
+        return this;
+      }),
+    };
     Customer.findOne.mockResolvedValueOnce(initial);
 
     const result = await service.addSavedPlace('u1', {

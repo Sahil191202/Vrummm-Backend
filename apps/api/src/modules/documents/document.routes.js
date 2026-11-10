@@ -39,13 +39,40 @@ export function createDocumentRouter({ authService, storageProvider }) {
   }
 
   // Captain self-service
-  router.post('/', auth, requireRole('CAPTAIN'), ensureCaptainProfile, upload.single('file'), validate({ body: uploadDocumentSchema }), controller.uploadDocument);
+  router.post(
+    '/',
+    auth,
+    requireRole('CAPTAIN'),
+    ensureCaptainProfile,
+    upload.single('file'),
+    validate({ body: uploadDocumentSchema }),
+    controller.uploadDocument,
+  );
   router.get('/mine', auth, requireRole('CAPTAIN'), ensureCaptainProfile, controller.listDocuments);
-  router.get('/:docId/url', auth, requireRole('CAPTAIN','SUPER_ADMIN'), ensureCaptainProfile, validate({ params: docIdParamSchema }), controller.getSignedUrl);
+  router.get(
+    '/:docId/url',
+    auth,
+    requireRole('CAPTAIN', 'SUPER_ADMIN'),
+    ensureCaptainProfile,
+    validate({ params: docIdParamSchema }),
+    controller.getSignedUrl,
+  );
 
   // Admin / Compliance
-  router.get('/captain/:captainId', auth, requirePermission(PERMISSIONS.DOCUMENTS_REVIEW), validate({ params: captainIdDocParamSchema }), controller.listCaptainDocuments);
-  router.patch('/:docId/review', auth, requirePermission(PERMISSIONS.DOCUMENTS_REVIEW), validate({ params: docIdParamSchema, body: reviewDocumentSchema }), controller.reviewDocument);
+  router.get(
+    '/captain/:captainId',
+    auth,
+    requirePermission(PERMISSIONS.DOCUMENTS_REVIEW),
+    validate({ params: captainIdDocParamSchema }),
+    controller.listCaptainDocuments,
+  );
+  router.patch(
+    '/:docId/review',
+    auth,
+    requirePermission(PERMISSIONS.DOCUMENTS_REVIEW),
+    validate({ params: docIdParamSchema, body: reviewDocumentSchema }),
+    controller.reviewDocument,
+  );
 
   return router;
 }

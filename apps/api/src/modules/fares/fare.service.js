@@ -5,12 +5,11 @@ import { errors } from '../../shared/AppError.js';
 export function createFareService() {
   // Get the currently active config for a vehicle type and zone.
   async function getActiveConfig(vehicleType, zone = 'mumbai') {
-    const config = await FareConfig.findOne({ vehicleType, zone, isActive: true })
-      .sort({ effectiveFrom: -1 });
+    const config = await FareConfig.findOne({ vehicleType, zone, isActive: true }).sort({
+      effectiveFrom: -1,
+    });
     if (!config) {
-      throw errors.notFound(
-        `No active fare config found for ${vehicleType} in zone ${zone}`,
-      );
+      throw errors.notFound(`No active fare config found for ${vehicleType} in zone ${zone}`);
     }
     return config;
   }
@@ -36,8 +35,9 @@ export function createFareService() {
     const { vehicleType, zone = 'mumbai', effectiveFrom, reason, ...fareFields } = data;
 
     // Close the current active config.
-    const current = await FareConfig.findOne({ vehicleType, zone, isActive: true })
-      .sort({ effectiveFrom: -1 });
+    const current = await FareConfig.findOne({ vehicleType, zone, isActive: true }).sort({
+      effectiveFrom: -1,
+    });
 
     const nextVersion = current ? current.version + 1 : 1;
 

@@ -10,7 +10,10 @@ export function createCustomerService() {
   }
 
   async function getProfile(userId) {
-    const profile = await Customer.findOne({ userId }).populate('userId', 'email displayName phone');
+    const profile = await Customer.findOne({ userId }).populate(
+      'userId',
+      'email displayName phone',
+    );
     if (!profile) throw errors.notFound('Customer profile not found');
     return profile;
   }
@@ -22,7 +25,11 @@ export function createCustomerService() {
     if (phone !== undefined) update.phone = phone;
 
     if (Object.keys(update).length > 0) {
-      const user = await User.findByIdAndUpdate(userId, { $set: update }, { new: true, runValidators: true });
+      const user = await User.findByIdAndUpdate(
+        userId,
+        { $set: update },
+        { new: true, runValidators: true },
+      );
       if (!user) throw errors.notFound('User not found');
     }
 

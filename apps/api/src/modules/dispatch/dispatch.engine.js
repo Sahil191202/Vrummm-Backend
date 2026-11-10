@@ -77,17 +77,13 @@ export async function runDispatchRound(bookingId, logger) {
   if (booking.status !== 'SEARCHING') return { outcome: 'already_resolved', booking };
 
   // Find the last completed round to determine radius.
-  const lastRound = await DispatchRound.findOne({ bookingId })
-    .sort({ roundNumber: -1 });
+  const lastRound = await DispatchRound.findOne({ bookingId }).sort({ roundNumber: -1 });
 
   const roundNumber = lastRound ? lastRound.roundNumber + 1 : 1;
   const initialRadius = DISPATCH_CONFIG.initialRadiusMetres[booking.vehicleType];
   const expansion = DISPATCH_CONFIG.radiusExpansionMetres[booking.vehicleType];
   const maxRadius = DISPATCH_CONFIG.maxRadiusMetres[booking.vehicleType];
-  const searchRadiusMetres = Math.min(
-    initialRadius + (roundNumber - 1) * expansion,
-    maxRadius,
-  );
+  const searchRadiusMetres = Math.min(initialRadius + (roundNumber - 1) * expansion, maxRadius);
 
   if (roundNumber > DISPATCH_CONFIG.maxRounds) {
     // Exhausted all rounds.
@@ -129,7 +125,10 @@ export async function runDispatchRound(bookingId, logger) {
   }
 
   if (eligible.length === 0) {
-    logger?.info({ bookingId, roundNumber, skipped: skipped.length }, 'no eligible captains this round');
+    logger?.info(
+      { bookingId, roundNumber, skipped: skipped.length },
+      'no eligible captains this round',
+    );
     return { outcome: 'no_eligible', round };
   }
 
@@ -140,7 +139,7 @@ export async function runDispatchRound(bookingId, logger) {
 // ── Atomic acceptance ─────────────────────────────────────────────────────────
 // Two simultaneous accepts must never produce two assigned captains.
 // We use findOneAndUpdate with state conditions as a compare-and-swap.
-export async function acceptOffer(offerId, captainId, userId) {
+export async function acceptOffer(offerId, captainId, _userId) {
   const session = await mongoose.startSession();
   let result;
   try {
@@ -209,10 +208,7 @@ export async function rejectOffer(offerId, captainId) {
 
 // ── Expire offers for a round ─────────────────────────────────────────────────
 export async function expireRoundOffers(roundId) {
-  await RideOffer.updateMany(
-    { roundId, status: 'PENDING' },
-    { $set: { status: 'EXPIRED' } },
-  );
+  await RideOffer.updateMany({ roundId, status: 'PENDING' }, { $set: { status: 'EXPIRED' } });
   await DispatchRound.updateOne(
     { _id: roundId, status: 'ACTIVE' },
     { $set: { status: 'FAILED', completedAt: new Date() } },

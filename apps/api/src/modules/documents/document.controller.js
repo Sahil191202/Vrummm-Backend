@@ -1,5 +1,5 @@
 import { sendSuccess } from '../../shared/respond.js';
-import { Captain } from '../captains/schemas/captain.schema.js';
+
 import { logAudit } from '../audit/audit.service.js';
 import { errors } from '../../shared/AppError.js';
 

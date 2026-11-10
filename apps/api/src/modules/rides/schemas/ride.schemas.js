@@ -14,16 +14,13 @@ export const verifyPinSchema = z.object({
 export const locationSampleSchema = z.object({
   coordinates: z.tuple([
     z.number().min(-180).max(180), // longitude
-    z.number().min(-90).max(90),   // latitude
+    z.number().min(-90).max(90), // latitude
   ]),
   recordedAt: z.string().datetime({ message: 'recordedAt must be ISO 8601' }),
 });
 
 export const completeRideSchema = z.object({
-  coordinates: z.tuple([
-    z.number().min(-180).max(180),
-    z.number().min(-90).max(90),
-  ]),
+  coordinates: z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]),
 });
 
 export const cancelRideSchema = z.object({

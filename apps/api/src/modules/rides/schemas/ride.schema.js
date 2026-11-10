@@ -5,7 +5,13 @@ const { Schema } = mongoose;
 
 const rideSchema = new Schema(
   {
-    bookingId: { type: Schema.Types.ObjectId, ref: 'Booking', required: true, unique: true, index: true },
+    bookingId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Booking',
+      required: true,
+      unique: true,
+      index: true,
+    },
     customerId: { type: Schema.Types.ObjectId, ref: 'Customer', required: true, index: true },
     captainId: { type: Schema.Types.ObjectId, ref: 'Captain', required: true, index: true },
     customerUserId: { type: Schema.Types.ObjectId, ref: 'User', required: true },

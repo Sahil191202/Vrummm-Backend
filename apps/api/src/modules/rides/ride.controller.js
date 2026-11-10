@@ -3,10 +3,7 @@ import { sendSuccess } from '../../shared/respond.js';
 export function createRideController({ rideService }) {
   return {
     async captainArrived(req, res) {
-      const ride = await rideService.captainArrived(
-        req.validated.params.rideId,
-        req.user.sub,
-      );
+      const ride = await rideService.captainArrived(req.validated.params.rideId, req.user.sub);
       return sendSuccess(req, res, ride);
     },
 
@@ -58,11 +55,10 @@ export function createRideController({ rideService }) {
 
     async listMyRides(req, res) {
       const { page, limit } = req.validated.query;
-      const result = await rideService.listRidesForUser(
-        req.user.sub,
-        req.user.role,
-        { page, limit },
-      );
+      const result = await rideService.listRidesForUser(req.user.sub, req.user.role, {
+        page,
+        limit,
+      });
       return sendSuccess(req, res, result.rides, {
         meta: {
           total: result.total,

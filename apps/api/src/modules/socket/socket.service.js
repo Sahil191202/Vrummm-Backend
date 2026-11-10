@@ -32,7 +32,10 @@ export async function emitToRoom({ io, room, event, payload, session }) {
   if (io) {
     try {
       io.to(room).emit(event, fullPayload);
-      await OutboxEvent.updateOne({ eventId }, { $set: { status: 'EMITTED', emittedAt: new Date() } });
+      await OutboxEvent.updateOne(
+        { eventId },
+        { $set: { status: 'EMITTED', emittedAt: new Date() } },
+      );
     } catch {
       // Outbox worker will retry.
     }

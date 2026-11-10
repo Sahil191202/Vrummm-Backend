@@ -20,11 +20,17 @@ vi.mock('../schemas/captain.schema.js', () => {
       const id = filter._id ? String(filter._id) : null;
       if (!id) return;
       const c = store.get(id);
-      if (c && update.$set) { Object.assign(c, update.$set); store.set(id, c); }
+      if (c && update.$set) {
+        Object.assign(c, update.$set);
+        store.set(id, c);
+      }
     }),
     find: vi.fn(async () => []),
     countDocuments: vi.fn(async () => 0),
-    _reset() { store.clear(); seq = 0; },
+    _reset() {
+      store.clear();
+      seq = 0;
+    },
   };
   return { Captain };
 });
@@ -46,18 +52,31 @@ const { Document } = await import('../../documents/schemas/document.schema.js');
 
 const service = createCaptainService();
 
-beforeEach(() => { Captain._reset(); vi.clearAllMocks(); });
+beforeEach(() => {
+  Captain._reset();
+  vi.clearAllMocks();
+});
 
 describe('setAvailability', () => {
   it('throws BUSINESS_RULE_VIOLATION when trying to go online while PENDING', async () => {
-    Captain.findOne.mockResolvedValueOnce({ _id: 'c1', userId: 'u1', approvalStatus: 'PENDING', isOnline: false });
+    Captain.findOne.mockResolvedValueOnce({
+      _id: 'c1',
+      userId: 'u1',
+      approvalStatus: 'PENDING',
+      isOnline: false,
+    });
     await expect(service.setAvailability('u1', true)).rejects.toMatchObject({
       code: 'BUSINESS_RULE_VIOLATION',
     });
   });
 
   it('throws BUSINESS_RULE_VIOLATION when required documents are missing', async () => {
-    Captain.findOne.mockResolvedValueOnce({ _id: 'c1', userId: 'u1', approvalStatus: 'APPROVED', isOnline: false });
+    Captain.findOne.mockResolvedValueOnce({
+      _id: 'c1',
+      userId: 'u1',
+      approvalStatus: 'APPROVED',
+      isOnline: false,
+    });
     Document.find.mockResolvedValueOnce([]); // no documents
     await expect(service.setAvailability('u1', true)).rejects.toMatchObject({
       code: 'BUSINESS_RULE_VIOLATION',
@@ -65,7 +84,12 @@ describe('setAvailability', () => {
   });
 
   it('allows going offline regardless of approval status', async () => {
-    Captain.findOne.mockResolvedValueOnce({ _id: 'c1', userId: 'u1', approvalStatus: 'PENDING', isOnline: true });
+    Captain.findOne.mockResolvedValueOnce({
+      _id: 'c1',
+      userId: 'u1',
+      approvalStatus: 'PENDING',
+      isOnline: true,
+    });
     const result = await service.setAvailability('u1', false);
     expect(result.isOnline).toBe(false);
   });

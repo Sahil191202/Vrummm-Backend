@@ -25,7 +25,10 @@ export function createOutboxWorker({ io, logger }) {
         const attempts = (evt.attempts ?? 0) + 1;
         await OutboxEvent.updateOne(
           { _id: evt._id },
-          { $set: { status: attempts >= MAX_ATTEMPTS ? 'FAILED' : 'PENDING' }, $inc: { attempts: 1 } },
+          {
+            $set: { status: attempts >= MAX_ATTEMPTS ? 'FAILED' : 'PENDING' },
+            $inc: { attempts: 1 },
+          },
         );
         logger.warn({ eventId: evt.eventId, err: err.message }, 'outbox emit failed');
       }
@@ -40,7 +43,10 @@ export function createOutboxWorker({ io, logger }) {
   }
 
   function stop() {
-    if (timer) { clearInterval(timer); timer = null; }
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
     logger.info('outbox worker stopped');
   }
 

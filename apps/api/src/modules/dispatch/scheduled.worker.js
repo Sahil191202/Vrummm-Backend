@@ -38,7 +38,10 @@ export function createScheduledWorker({ logger }) {
 
     if (!job) return; // Nothing to do.
 
-    logger.info({ jobId: job._id, bookingId: job.bookingId, attempt: job.attempts }, 'scheduled dispatch starting');
+    logger.info(
+      { jobId: job._id, bookingId: job.bookingId, attempt: job.attempts },
+      'scheduled dispatch starting',
+    );
 
     try {
       const booking = await Booking.findById(job.bookingId);
@@ -72,7 +75,10 @@ export function createScheduledWorker({ logger }) {
           },
         },
       );
-      logger.error({ jobId: job._id, err: err.message, attempt: job.attempts }, 'scheduled dispatch failed');
+      logger.error(
+        { jobId: job._id, err: err.message, attempt: job.attempts },
+        'scheduled dispatch failed',
+      );
     }
   }
 
@@ -89,7 +95,10 @@ export function createScheduledWorker({ logger }) {
   }
 
   function start() {
-    logger.info({ workerId: WORKER_ID, pollIntervalMs: POLL_INTERVAL_MS }, 'scheduled worker started');
+    logger.info(
+      { workerId: WORKER_ID, pollIntervalMs: POLL_INTERVAL_MS },
+      'scheduled worker started',
+    );
     // Run immediately, then on interval.
     poll();
     timer = setInterval(poll, POLL_INTERVAL_MS);
@@ -98,7 +107,10 @@ export function createScheduledWorker({ logger }) {
   }
 
   function stop() {
-    if (timer) { clearInterval(timer); timer = null; }
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
     logger.info({ workerId: WORKER_ID }, 'scheduled worker stopped');
   }
 
