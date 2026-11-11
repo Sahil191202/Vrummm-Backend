@@ -35,15 +35,29 @@ export function createApp({
       maxAge: 600,
     }),
   );
-  // NOTE Phase 7: Razorpay webhook must be mounted BEFORE this line with express.raw()
-  app.use(express.json({ limit: '100kb' }));
+  // Phase 7: Capture unparsed raw body for Razorpay webhook signature verification
+  app.use(
+    express.json({
+      limit: '100kb',
+      verify: (req, _res, buf) => {
+        req.rawBody = buf;
+      },
+    }),
+  );
 
   const healthService = createHealthService({ checkDatabase, version });
   const authService = createAuthService({ authConfig: config.auth });
 
   app.use(
     API_BASE_PATH,
-    createApiRouter({ healthService, authService, storageProvider, logger, io }),
+    createApiRouter({
+      healthService,
+      authService,
+      storageProvider,
+      logger,
+      io,
+      razorpayConfig: config.razorpay,
+    }),
   );
 
   app.use(notFound);

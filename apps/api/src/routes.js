@@ -9,9 +9,34 @@ import { createFareRouter } from './modules/fares/fare.routes.js';
 import { createBookingRouter } from './modules/bookings/booking.routes.js';
 import { createDispatchRouter } from './modules/dispatch/dispatch.routes.js';
 import { createRideRouter } from './modules/rides/ride.routes.js';
+import { createRevenuePlanRouter } from './modules/revenuePlans/revenuePlan.routes.js';
+import { createRevenuePlanService } from './modules/revenuePlans/revenuePlan.service.js';
+import { createPaymentRouter } from './modules/payments/payment.routes.js';
+import { createPaymentService } from './modules/payments/payment.service.js';
+import { createPaymentProviderRegistry } from './modules/payments/providers/paymentProvider.factory.js';
+import { createLedgerRouter } from './modules/ledger/ledger.routes.js';
+import { createLedgerService } from './modules/ledger/ledger.service.js';
 
-export function createApiRouter({ healthService, authService, storageProvider, logger, io }) {
+export function createApiRouter({
+  healthService,
+  authService,
+  storageProvider,
+  logger,
+  io,
+  razorpayConfig,
+}) {
   const router = Router();
+
+  const revenuePlanService = createRevenuePlanService();
+  const ledgerService = createLedgerService();
+  const paymentProviderRegistry = createPaymentProviderRegistry({ razorpayConfig });
+  const paymentService = createPaymentService({
+    paymentProviderRegistry,
+    revenuePlanService,
+    ledgerService,
+    io,
+  });
+
   router.use('/health', createHealthRouter({ healthService }));
   router.use('/auth', createAuthRouter({ authService }));
   router.use('/customers', createCustomerRouter({ authService }));
@@ -22,5 +47,9 @@ export function createApiRouter({ healthService, authService, storageProvider, l
   router.use('/bookings', createBookingRouter({ authService }));
   router.use('/dispatch', createDispatchRouter({ authService, logger }));
   router.use('/rides', createRideRouter({ authService, io }));
+  router.use('/revenue-plans', createRevenuePlanRouter({ authService }));
+  router.use('/payments', createPaymentRouter({ paymentService, authService }));
+  router.use('/ledger', createLedgerRouter({ authService }));
+
   return router;
 }

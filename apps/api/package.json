@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@vrumm/contracts": "*",
+    "@vrumm/validation": "*",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.6.1",
     "cors": "^2.8.6",
@@ -21,6 +22,7 @@
     "mongoose": "^9.11.3",
     "multer": "^2.0.1",
     "pino": "^10.4.0",
+    "razorpay": "^2.9.8",
     "socket.io": "^4.8.4",
     "zod": "^4.6.7"
   },

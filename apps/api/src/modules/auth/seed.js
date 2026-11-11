@@ -10,6 +10,7 @@ import { loadEnv, EnvValidationError } from '../../config/env.js';
 import { createLogger } from '../../config/logger.js';
 import { connectMongo } from '../../db/connection.js';
 import { User } from '../rbac/schemas/user.schema.js';
+import { RevenuePlan } from '../revenuePlans/schemas/revenuePlan.schema.js';
 import { ROLES } from '../rbac/permissions.js';
 import bcrypt from 'bcrypt';
 
@@ -68,7 +69,49 @@ async function seed() {
     logger.info({ email: u.email, role: u.role }, 'seed user created');
   }
 
-  logger.info({ created, skipped }, 'seed complete');
+  logger.info({ created, skipped }, 'seed users complete');
+
+  // Seed default revenue plans
+  const superAdmin = await User.findOne({ role: ROLES.SUPER_ADMIN });
+  if (superAdmin) {
+    const defaultPlans = [
+      {
+        name: 'Standard Commission Plan',
+        description: 'Standard 3.00% commission per completed ride',
+        type: 'COMMISSION',
+        commissionBps: 300,
+        isActive: true,
+        createdBy: superAdmin._id,
+      },
+      {
+        name: 'Growth Commission Plan',
+        description: 'Competitive 3.50% commission with dedicated partner benefits',
+        type: 'COMMISSION',
+        commissionBps: 350,
+        isActive: true,
+        createdBy: superAdmin._id,
+      },
+      {
+        name: 'Daily Pass (Simulated)',
+        description: 'Flat Rs. 150 daily pass with 0% ride commission (simulated only)',
+        type: 'SUBSCRIPTION',
+        subscriptionPricePaise: 15000,
+        subscriptionBillingPeriod: 'DAILY',
+        isActive: true,
+        createdBy: superAdmin._id,
+      },
+    ];
+
+    for (const plan of defaultPlans) {
+      const exists = await RevenuePlan.findOne({ name: plan.name });
+      if (!exists) {
+        await RevenuePlan.create(plan);
+        logger.info({ plan: plan.name }, 'seed revenue plan created');
+      }
+    }
+  }
+
+  logger.info('seed complete');
   await mongoose.disconnect();
 }
 

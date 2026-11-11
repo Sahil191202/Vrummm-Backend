@@ -5,11 +5,17 @@ It is **not legally authorised for commercial transport**. Live rides, real paym
 
 ## Status
 
-| Phase  | Scope                                      | State            |
-| ------ | ------------------------------------------ | ---------------- |
-| 1      | Foundation                                 | Done (this repo) |
-| 2      | Auth, sessions, RBAC, audit, rate limiting | Next             |
-| 3 to 9 | See the build prompt                       | Not started      |
+| Phase | Scope                                             | State          |
+| ----- | ------------------------------------------------- | -------------- |
+| 1     | Foundation                                        | Done           |
+| 2     | Auth, sessions, RBAC, audit, rate limiting        | Done           |
+| 3     | Customers, captains, vehicles, documents          | Done           |
+| 4     | Fare configs, fare quotes, bookings, idempotency  | Done           |
+| 5     | Dispatch: offers, distance rules, rounds, worker  | Done           |
+| 6     | Ride lifecycle: PIN, simulated GPS, cancellations | Done           |
+| 7     | Revenue plans, payments, webhooks, ledger         | Done (this PR) |
+| 8     | Promotions, incentives, safety, support, reports  | Next           |
+| 9     | Security review, API docs, pilot-readiness        | Not started    |
 
 ## Layout
 

@@ -106,7 +106,116 @@ Return the current user's profile.
 
 ---
 
-## Seed accounts (development only)
+## Phase 7: Revenue Plans, Payments, Webhooks, Ledger
+
+### Revenue Plans
+
+#### POST /api/v1/revenue-plans
+
+Create a new revenue plan. Admin only (`revenuePlans.write`).
+
+- Request body:
+  - `name`: string (2-100 chars)
+  - `description?`: string
+  - `type`: `COMMISSION` or `SUBSCRIPTION`
+  - `commissionBps?`: 300 to 350 (required if COMMISSION, representing 3.00% to 3.50%)
+  - `subscriptionPricePaise?`: positive integer (required if SUBSCRIPTION)
+  - `subscriptionBillingPeriod?`: `DAILY`, `WEEKLY`, `MONTHLY` (default: `DAILY`)
+- Response 201: Created plan document.
+
+#### GET /api/v1/revenue-plans
+
+List revenue plans.
+
+- Query: `type?`, `isActive?`
+- Response 200: Array of plans.
+
+#### POST /api/v1/revenue-plans/captains/select
+
+Captain selects or switches active revenue plan. Captain only (`CAPTAIN`).
+
+- Request body: `{ planId, effectiveFrom? }`
+- Response 201: Plan assignment record with effective dates.
+
+#### GET /api/v1/revenue-plans/captains/my-plan
+
+Captain views their current active plan and plan history. Captain only (`CAPTAIN`).
+
+- Response 200: `{ currentPlan, history }`.
+
+---
+
+### Payments & Webhooks
+
+#### POST /api/v1/payments/orders
+
+Initiate payment order for a completed ride. Customer only (`CUSTOMER`).
+
+- Authoritative payable amount is calculated server-side from `ride.fareSnapshot.totalPaise`.
+- Request body: `{ rideId, provider?, idempotencyKey? }` (`provider`: `MOCK` or `RAZORPAY`)
+- Response 201: `{ paymentId, providerOrderId, amountPaise, currency: "INR", keyId, provider }` (never returns secret keys).
+
+#### POST /api/v1/payments/verify
+
+Verify checkout signature and capture payment. Customer only (`CUSTOMER`).
+
+- Validates cryptographic HMAC-SHA256 signature using the provider abstraction.
+- On valid signature: atomically sets payment to `CAPTURED`, posts balanced entries to append-only ledger, and credits captain earnings.
+- Request body: `{ paymentId, providerPaymentId, providerSignature }`
+- Response 200: Captured payment record.
+
+#### POST /api/v1/payments/webhook
+
+Inbound webhook from payment provider.
+
+- Signature validated against unparsed raw request body using provider secret.
+- Atomically deduplicates event IDs to prevent duplicate processing.
+- Handles `payment.captured`, `order.paid`, and `payment.failed`.
+- Response 200: `{ received: true }`.
+
+#### POST /api/v1/payments/:paymentId/refund/simulate
+
+Simulate refund for a captured payment. Admin only (`payments.refund.simulate`).
+
+- No real Razorpay refund API call is made.
+- Records `REFUNDED_SIMULATED`, posts adjustment ledger entries, and audit logs the action with required reason.
+- Request body: `{ reason }` (minimum 5 chars).
+- Response 200: Refunded payment record.
+
+---
+
+### Ledger (Append-Only)
+
+#### GET /api/v1/ledger/entries
+
+Query immutable, append-only financial ledger entries. Admin only (`payments.read`).
+
+- Query: `accountType?`, `accountUserId?`, `rideId?`, `entryType?`, `page`, `limit`
+- Response 200: Array of entries with pagination meta.
+
+#### GET /api/v1/ledger/balance
+
+Get aggregated credit/debit balance.
+
+- Captain returns own earnings balance.
+- Finance/Admin can pass `accountUserId` and `accountType`.
+- Response 200: `{ accountUserId, accountType, balancePaise, balanceRupees }`.
+
+#### POST /api/v1/ledger/adjustments
+
+Post manual adjustment entry. Admin only (`payments.read`).
+
+- Corrections are strictly append-only (never edits or deletes existing entries).
+- Request body: `{ accountUserId, accountType, direction, amountPaise, reason, description }`
+- Response 201: Created adjustment entry.
+
+#### POST /api/v1/ledger/payouts/simulate
+
+Simulate captain earnings payout withdrawal. Captain only (`CAPTAIN`).
+
+- Checks available balance and posts simulated payout debit.
+- Request body: `{ amountPaise, idempotencyKey? }`
+- Response 201: Payout ledger entry.
 
 Default password for all seed accounts: `Vrumm@Dev2026!` — change before any shared deployment.
 

@@ -52,6 +52,18 @@ const rideSchema = new Schema(
     // Revenue plan snapshot — copied when ride is created (Phase 7).
     revenuePlanSnapshot: { type: Schema.Types.Mixed },
 
+    // Payment state tracking (Phase 7).
+    paymentStatus: {
+      type: String,
+      enum: ['UNPAID', 'PENDING', 'PAID', 'REFUNDED'],
+      default: 'UNPAID',
+      index: true,
+    },
+    paymentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Payment',
+    },
+
     // Timestamps for each state transition.
     arrivedAt: { type: Date },
     startedAt: { type: Date },
