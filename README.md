@@ -13,9 +13,9 @@ It is **not legally authorised for commercial transport**. Live rides, real paym
 | 4     | Fare configs, fare quotes, bookings, idempotency  | Done           |
 | 5     | Dispatch: offers, distance rules, rounds, worker  | Done           |
 | 6     | Ride lifecycle: PIN, simulated GPS, cancellations | Done           |
-| 7     | Revenue plans, payments, webhooks, ledger         | Done (this PR) |
-| 8     | Promotions, incentives, safety, support, reports  | Next           |
-| 9     | Security review, API docs, pilot-readiness        | Not started    |
+| 7     | Revenue plans, payments, webhooks, ledger         | Done           |
+| 8     | Promotions, incentives, safety, support, reports  | Done (this PR) |
+| 9     | Security review, API docs, pilot-readiness        | Next           |
 
 ## Layout
 

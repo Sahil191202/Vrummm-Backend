@@ -217,6 +217,171 @@ Simulate captain earnings payout withdrawal. Captain only (`CAPTAIN`).
 - Request body: `{ amountPaise, idempotencyKey? }`
 - Response 201: Payout ledger entry.
 
+---
+
+## Phase 8: Promotions, Incentives, Safety, and Admin Reports
+
+### Promotions
+
+#### POST /api/v1/promotions/validate
+
+Validate a promo code for a booking. Authenticated customers.
+
+- Request body: `{ code, farePaise, vehicleType? }`
+- Response 200: `{ valid: true, discountPaise, finalFarePaise, promotion }`
+
+#### GET /api/v1/promotions
+
+List promotions with pagination. Admin only (`promotions.read`).
+
+- Query: `isActive?`, `page`, `limit`
+- Response 200: Paginated list of promotions.
+
+#### POST /api/v1/promotions
+
+Create promotion campaign. Admin only (`promotions.write`).
+
+- Request body: `{ code, title, description?, discountType, discountValue, maxDiscountPaise?, minFarePaise?, usageLimitTotal?, usageLimitPerUser?, isFirstRideOnly?, startsAt, expiresAt }`
+- Response 201: Created promotion object.
+
+#### GET /api/v1/promotions/:promotionId
+
+Get promotion details. Admin only (`promotions.read`).
+
+#### PATCH /api/v1/promotions/:promotionId/toggle
+
+Activate or deactivate promotion. Admin only (`promotions.write`).
+
+---
+
+### Incentives
+
+#### GET /api/v1/incentives/my-awards
+
+List captain's earned incentive awards. Captain only.
+
+- Response 200: Array of awards with total earned paise.
+
+#### POST /api/v1/incentives/evaluate
+
+Evaluate captain progress towards an incentive campaign. Captain only.
+
+- Request body: `{ campaignId, completedRidesCount, peakRidesCount?, periodKey }`
+- Response 200: `{ qualified, reason, award? }`. If newly qualified, atomically records award with idempotent key and credits captain ledger account.
+
+#### GET /api/v1/incentives
+
+List incentive campaigns. Authenticated users.
+
+- Query: `targetType?`, `isActive?`, `page`, `limit`
+
+#### POST /api/v1/incentives
+
+Create incentive campaign. Admin only (`promotions.write`).
+
+- Request body: `{ title, description?, targetType, rewardPaise, requiredRidesCount, vehicleTypes?, startsAt, expiresAt }`
+- Response 201: Created incentive campaign.
+
+#### GET /api/v1/incentives/:campaignId
+
+Get incentive campaign details.
+
+#### PATCH /api/v1/incentives/:campaignId/toggle
+
+Toggle active state. Admin only (`promotions.write`).
+
+---
+
+### Safety & Support
+
+#### GET /api/v1/safety/trip-share/:token
+
+Public real-time trip tracking endpoint. No authentication required.
+
+- Response 200: Sanitized live trip snapshot (status, pickup, drop, driver first name, vehicle details, latest simulated location, share token expiry).
+
+#### POST /api/v1/safety/trip-share
+
+Generate expiring shareable tracking link. Customer only.
+
+- Request body: `{ rideId, expiresInHours? }`
+- Response 201: `{ token, shareUrl, expiresAt }`
+
+#### POST /api/v1/safety/sos
+
+Trigger emergency SOS alert. Customer or Captain.
+
+> [!NOTE]
+> SOS alerts are strictly **simulated** (`isSimulated: true`). They do not dispatch physical emergency services.
+
+- Request body: `{ rideId, location: [longitude, latitude], reason? }`
+- Emits real-time `safety:incident` socket event to ride room and `ops:dashboard`.
+- Response 201: Created emergency incident record.
+
+#### POST /api/v1/safety/incidents
+
+Report safety incident. Authenticated users.
+
+- Request body: `{ rideId?, incidentType, severity, description, location? }`
+- Response 201: Incident record.
+
+#### GET /api/v1/safety/incidents
+
+List safety incidents. Operations & Support (`incidents.read`).
+
+- Query: `rideId?`, `status?`, `severity?`, `incidentType?`, `page`, `limit`
+
+#### PATCH /api/v1/safety/incidents/:incidentId/resolve
+
+Resolve incident with audit note. Operations & Support (`incidents.resolve`).
+
+- Request body: `{ resolutionNote, status? }`
+
+#### POST /api/v1/safety/tickets
+
+Open support ticket. Authenticated users.
+
+- Request body: `{ category, subject, description, rideId?, priority? }`
+
+#### GET /api/v1/safety/tickets
+
+List tickets. Users see own tickets; Support/Ops view all (`support.read`).
+
+#### POST /api/v1/safety/tickets/:ticketId/messages
+
+Append message to support ticket thread.
+
+#### PATCH /api/v1/safety/tickets/:ticketId/status
+
+Update ticket lifecycle status. Support/Ops (`support.write`).
+
+---
+
+### Admin Reports
+
+#### GET /api/v1/admin/reports/operations
+
+Operational aggregate metrics for ride operations. Admin (`rides.read`).
+
+- Query: `from?`, `to?` (ISO dates)
+- Response 200: Total rides, breakdown by status (`COMPLETED`, `CANCELLED`, etc.), completed distance (meters), average ride duration (seconds).
+
+#### GET /api/v1/admin/reports/financial
+
+Financial summary with Gross Booking Value (GBV), commissions, and simulated refunds. Admin (`payments.read`).
+
+- Query: `from?`, `to?` (ISO dates)
+- Response 200: Gross booking value (paise/rupees), total platform commission, total captain earnings, simulated refunds, successful payments count.
+
+#### GET /api/v1/admin/reports/captains/leaderboard
+
+Captain performance leaderboard. Admin (`captains.read`).
+
+- Query: `limit?` (1-100)
+- Response 200: Top captains ranked by completed rides count.
+
+---
+
 Default password for all seed accounts: `Vrumm@Dev2026!` — change before any shared deployment.
 
 | Email                | Role        |

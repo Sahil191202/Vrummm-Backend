@@ -24,3 +24,34 @@ export const LEDGER_ENTRY_TYPES = Object.freeze([
   'SUBSCRIPTION_FEE_SIMULATED',
 ]);
 export const LEDGER_DIRECTIONS = Object.freeze(['CREDIT', 'DEBIT']);
+
+export const PROMOTION_DISCOUNT_TYPES = Object.freeze(['PERCENTAGE', 'FLAT']);
+export const INCENTIVE_TARGET_TYPES = Object.freeze([
+  'DAILY_RIDES',
+  'WEEKLY_RIDES',
+  'PEAK_HOUR',
+  'REFERRAL',
+]);
+export const INCIDENT_TYPES = Object.freeze([
+  'SOS_SIMULATED',
+  'ACCIDENT',
+  'HARASSMENT',
+  'ROUTE_DEVIATION',
+  'OTHER',
+]);
+export const INCIDENT_SEVERITIES = Object.freeze(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
+export const INCIDENT_STATUSES = Object.freeze([
+  'REPORTED',
+  'INVESTIGATING',
+  'RESOLVED',
+  'DISMISSED',
+]);
+export const SUPPORT_TICKET_CATEGORIES = Object.freeze([
+  'BILLING',
+  'RIDE_ISSUE',
+  'ACCOUNT',
+  'SAFETY',
+  'OTHER',
+]);
+export const SUPPORT_TICKET_STATUSES = Object.freeze(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']);
+export const SUPPORT_TICKET_PRIORITIES = Object.freeze(['LOW', 'NORMAL', 'HIGH', 'URGENT']);

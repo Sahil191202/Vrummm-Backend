@@ -16,6 +16,10 @@ import { createPaymentService } from './modules/payments/payment.service.js';
 import { createPaymentProviderRegistry } from './modules/payments/providers/paymentProvider.factory.js';
 import { createLedgerRouter } from './modules/ledger/ledger.routes.js';
 import { createLedgerService } from './modules/ledger/ledger.service.js';
+import { createPromotionRouter } from './modules/promotions/promotion.routes.js';
+import { createIncentiveRouter } from './modules/incentives/incentive.routes.js';
+import { createSafetyRouter } from './modules/safety/safety.routes.js';
+import { createAdminRouter } from './modules/admin/admin.routes.js';
 
 export function createApiRouter({
   healthService,
@@ -50,6 +54,10 @@ export function createApiRouter({
   router.use('/revenue-plans', createRevenuePlanRouter({ authService }));
   router.use('/payments', createPaymentRouter({ paymentService, authService }));
   router.use('/ledger', createLedgerRouter({ authService }));
+  router.use('/promotions', createPromotionRouter({ authService }));
+  router.use('/incentives', createIncentiveRouter({ authService, ledgerService }));
+  router.use('/safety', createSafetyRouter({ authService, io }));
+  router.use('/admin', createAdminRouter({ authService }));
 
   return router;
 }

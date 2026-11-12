@@ -9,6 +9,14 @@ import {
   LEDGER_ACCOUNT_TYPES,
   LEDGER_ENTRY_TYPES,
   LEDGER_DIRECTIONS,
+  PROMOTION_DISCOUNT_TYPES,
+  INCENTIVE_TARGET_TYPES,
+  INCIDENT_TYPES,
+  INCIDENT_SEVERITIES,
+  INCIDENT_STATUSES,
+  SUPPORT_TICKET_CATEGORIES,
+  SUPPORT_TICKET_STATUSES,
+  SUPPORT_TICKET_PRIORITIES,
 } from '@vrumm/contracts';
 
 // Money: integer paise only. Never floats.
@@ -30,6 +38,15 @@ export const paymentProviderSchema = z.enum(PAYMENT_PROVIDERS);
 export const ledgerAccountTypeSchema = z.enum(LEDGER_ACCOUNT_TYPES);
 export const ledgerEntryTypeSchema = z.enum(LEDGER_ENTRY_TYPES);
 export const ledgerDirectionSchema = z.enum(LEDGER_DIRECTIONS);
+
+export const promotionDiscountTypeSchema = z.enum(PROMOTION_DISCOUNT_TYPES);
+export const incentiveTargetTypeSchema = z.enum(INCENTIVE_TARGET_TYPES);
+export const incidentTypeSchema = z.enum(INCIDENT_TYPES);
+export const incidentSeveritySchema = z.enum(INCIDENT_SEVERITIES);
+export const incidentStatusSchema = z.enum(INCIDENT_STATUSES);
+export const supportTicketCategorySchema = z.enum(SUPPORT_TICKET_CATEGORIES);
+export const supportTicketStatusSchema = z.enum(SUPPORT_TICKET_STATUSES);
+export const supportTicketPrioritySchema = z.enum(SUPPORT_TICKET_PRIORITIES);
 
 // GeoJSON Point. Coordinates are [longitude, latitude].
 export const geoPointSchema = z.object({
